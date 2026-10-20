@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B0B0C" id="themeColor">
+<meta name="color-scheme" content="dark light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>My Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap">
+<style>
+/* Layout: phone-first app shell, one column (max 480px), fixed bottom tab bar + floating add button. Dark-first. */
+:root{
+  --bg:#0B0B0C; --surface:#151517; --surface2:#1E1E21; --line:#2A2A2F; --track:#2A2A2F;
+  --fg:#F2F2F3; --muted:#9A9AA0; --faint:#6B6B72;
+  --accent:#F01E14; --accent-fg:#FFFFFF; --accent-text:#FF4A3D;
+  --sick:#F5A524; --personal:#4DABFF; --vac:#34D399; --unknown:#B9B9C0; --warn:#F5A524;
+  --texture:rgba(255,255,255,0.018); --overlay:rgba(0,0,0,0.6); --on-leave:#111111;
+  --font-th:'IBM Plex Sans Thai',system-ui,'Noto Sans Thai',sans-serif;
+  --font-num:'Rajdhani','IBM Plex Sans Thai',system-ui,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F4F4F5; --surface:#FFFFFF; --surface2:#EDEDEF; --line:#E1E1E5; --track:#E4E4E7;
+    --fg:#141416; --muted:#5E5E66; --faint:#8A8A92;
+    --accent:#D7140B; --accent-fg:#FFFFFF; --accent-text:#C4120A;
+    --sick:#B45309; --personal:#0B6BCB; --vac:#0F7A45; --unknown:#5E5E66; --warn:#B45309;
+    --texture:rgba(0,0,0,0.025); --overlay:rgba(20,20,22,0.45); --on-leave:#FFFFFF;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F4F4F5; --surface:#FFFFFF; --surface2:#EDEDEF; --line:#E1E1E5; --track:#E4E4E7;
+  --fg:#141416; --muted:#5E5E66; --faint:#8A8A92;
+  --accent:#D7140B; --accent-fg:#FFFFFF; --accent-text:#C4120A;
+  --sick:#B45309; --personal:#0B6BCB; --vac:#0F7A45; --unknown:#5E5E66; --warn:#B45309;
+  --texture:rgba(0,0,0,0.025); --overlay:rgba(20,20,22,0.45); --on-leave:#FFFFFF;
+  color-scheme:light;
+}
+html,body{margin:0}
+body{padding-top:env(safe-area-inset-top,0px)}
+img{max-width:100%}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  background-color:var(--bg);
+  background-image:repeating-linear-gradient(45deg,var(--texture) 0 2px,transparent 2px 6px);
+  color:var(--fg); font-family:var(--font-th); font-size:15px; line-height:1.5;
+  -webkit-tap-highlight-color:transparent;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent-text);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;min-height:100%;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 calc(150px + env(safe-area-inset-bottom,0px))}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.cut-tr{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+.cut-2{clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px))}
+.cut-br{clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)}
+
+header.top{display:flex;justify-content:space-between;align-items:flex-end;padding-block:22px 10px;gap:12px}
+header.top .date{font-size:13px;color:var(--muted);letter-spacing:.04em}
+header.top h1{margin:0;font-size:24px;font-weight:700;line-height:1.25;text-wrap:balance}
+.head-actions{display:flex;align-items:center;gap:8px}
+.theme-btn{width:44px;height:44px;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.badge{font-family:var(--font-num);font-weight:700;font-size:13px;letter-spacing:.2em;color:var(--accent-text);
+  border:1px solid var(--accent-text);padding:4px 10px;background:none;cursor:pointer;min-height:32px;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+
+.stack{display:flex;flex-direction:column;gap:14px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px 0}
+.sec-h h2{margin:0;font-size:15px;font-weight:600}
+.sec-h .aside{font-size:12px;color:var(--muted)}
+.link-btn{background:none;border:0;color:var(--accent-text);font-size:13px;font-weight:600;cursor:pointer;padding:6px 4px;min-height:36px}
+
+.card{background:var(--surface)}
+.holiday{padding:18px 20px 18px 23px;display:flex;justify-content:space-between;align-items:center;gap:12px;position:relative}
+.holiday::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;background:var(--accent)}
+.holiday .lbl{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.holiday .name{font-size:20px;font-weight:700;line-height:1.3}
+.holiday .sub{font-size:13px;color:var(--muted)}
+.holiday .count{display:flex;flex-direction:column;align-items:center;min-width:72px}
+.holiday .count b{font-family:var(--font-num);font-weight:700;font-size:52px;line-height:.9;color:var(--accent-text)}
+.holiday .count span{font-size:12px;color:var(--muted)}
+
+.gauges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.gauge{padding:14px 6px 12px;display:flex;flex-direction:column;align-items:center}
+.gauge svg{display:block}
+.gauge .val{font-family:var(--font-num);font-weight:700;font-size:32px;line-height:1;margin-top:-24px}
+.gauge .t{font-size:13px;font-weight:600;margin-top:6px}
+.gauge .u{font-size:11px;color:var(--muted)}
+.gauge.over .val{color:var(--accent-text)}
+
+.todo{display:flex;flex-direction:column;gap:8px}
+.todo-item{width:100%;text-align:left;border:0;background:var(--surface);padding:12px 14px;display:flex;align-items:center;gap:12px;min-height:56px;cursor:pointer}
+.todo-item .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.todo-item .tx b{font-size:14px;font-weight:600}
+.todo-item .tx span{font-size:12px;color:var(--muted)}
+.todo-item.overdue .tx b{color:var(--accent-text)}
+.all-done{padding:14px;font-size:13px;color:var(--muted);background:var(--surface);display:flex;gap:10px;align-items:center}
+
+.month-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.month-strip > div{padding:14px 12px;display:flex;flex-direction:column;gap:2px}
+.month-strip > div + div{border-left:1px solid var(--line)}
+.month-strip .k{font-size:11px;color:var(--muted)}
+.month-strip .v{font-family:var(--font-num);font-weight:700;font-size:26px;line-height:1.1}
+.month-strip .v small{font-size:13px;color:var(--muted);font-weight:600;font-family:var(--font-th)}
+.month-strip .v.na{color:var(--faint)}
+.month-strip .note{font-size:11px;color:var(--faint)}
+
+/* calendar */
+.cal{padding:14px 12px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-head b{font-size:16px}
+.icon-btn{width:44px;height:44px;border:0;background:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg)}
+.icon-btn:disabled{opacity:.3;cursor:default}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-dow{font-size:11px;color:var(--muted);text-align:center;padding-bottom:2px}
+.cal-day{aspect-ratio:1/1.05;border:0;background:var(--surface2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:var(--font-num);font-weight:600;font-size:16px;cursor:pointer;position:relative;padding:0;min-height:40px}
+.cal-day.empty{background:none;cursor:default}
+.cal-day.we{background:none;color:var(--faint)}
+.cal-day.hol{background:none;color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--accent)}
+.cal-day.today{box-shadow:inset 0 0 0 2px var(--fg)}
+.cal-day.lv{color:var(--on-leave)}
+.cal-day.lv.sick{background:var(--sick)}
+.cal-day.lv.personal{background:var(--personal)}
+.cal-day.lv.vacation{background:var(--vac)}
+.cal-day.lv.unknown{background:none;color:var(--fg);box-shadow:inset 0 0 0 2px var(--unknown);border-style:dashed}
+.cal-day.lv.half{background-image:linear-gradient(135deg,transparent 50%,var(--surface2) 50%)}
+.cal-day .dot{width:5px;height:5px;background:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;display:inline-block}
+
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 8px;border:1px solid currentColor;white-space:nowrap}
+.c-sick{color:var(--sick)}.c-personal{color:var(--personal)}.c-vacation{color:var(--vac)}.c-unknown{color:var(--unknown)}
+.bg-sick{background:var(--sick)}.bg-personal{background:var(--personal)}.bg-vacation{background:var(--vac)}.bg-unknown{background:var(--unknown)}
+
+.lv-list{display:flex;flex-direction:column}
+.lv-month{font-size:12px;color:var(--muted);letter-spacing:.06em;padding:14px 4px 6px}
+.lv-row{width:100%;border:0;background:var(--surface);text-align:left;display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;cursor:pointer;min-height:60px}
+.lv-row + .lv-row{border-top:1px solid var(--line)}
+.lv-row .d{display:flex;flex-direction:column;align-items:center;line-height:1}
+.lv-row .d b{font-family:var(--font-num);font-size:26px;font-weight:700}
+.lv-row .d span{font-size:11px;color:var(--muted);margin-top:4px}
+.lv-row .m{min-width:0;display:flex;flex-direction:column;gap:3px}
+.lv-row .m .r{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv-row .flag{font-size:11px;color:var(--warn);display:inline-flex;align-items:center;gap:4px}
+.lv-row .ok{font-size:11px;color:var(--muted)}
+
+.ts-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:var(--surface);border:0;width:100%;text-align:left;cursor:pointer;min-height:52px}
+.ts-row + .ts-row{border-top:1px solid var(--line)}
+.ts-row .st{font-size:12px;display:inline-flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ok-t{color:var(--vac)} .no-t{color:var(--warn)}
+
+.hol-row{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--surface);font-size:14px}
+.hol-row + .hol-row{border-top:1px solid var(--line)}
+.hol-row.past{color:var(--faint)}
+.hol-row .num{font-weight:600}
+
+.tool-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:0;padding:10px 16px;min-height:44px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn-primary{background:var(--accent);color:var(--accent-fg);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.btn-ghost{background:var(--surface);color:var(--fg)}
+.btn-danger{background:none;color:var(--accent-text);border:1px solid var(--accent-text)}
+.btn-danger.armed{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+
+.placeholder{padding:28px 20px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.placeholder b{font-size:17px}
+.placeholder p{margin:0;color:var(--muted);font-size:14px;max-width:32ch}
+.placeholder ul{margin:6px 0 0;padding:0;list-style:none;color:var(--muted);font-size:13px;display:flex;flex-direction:column;gap:4px}
+
+.pending-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--warn);font-size:13px;margin-top:8px}
+.pending-bar b{color:var(--warn)}
+.tag-pending{font-size:11px;color:var(--warn);border:1px dashed var(--warn);padding:0 6px;margin-left:6px}
+.onboard{padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.onboard b{font-size:17px}
+.onboard p{margin:0;color:var(--muted);font-size:14px}
+.set-sec{border-top:1px solid var(--line);padding-top:16px;margin-top:6px}
+.set-sec h4{margin:0 0 10px;font-size:15px}
+.sync-status{font-size:13px;color:var(--muted);margin:0 0 12px}
+.sync-status.bad{color:var(--accent-text)}
+.banner{padding:12px 14px;background:var(--surface);border:1px solid var(--warn);font-size:13px;color:var(--fg);margin-top:8px}
+
+/* fab + nav */
+.fab{position:fixed;right:max(20px,calc(50% - 220px));bottom:calc(92px + env(safe-area-inset-bottom,0px));width:60px;height:60px;border:0;background:var(--accent);color:var(--accent-fg);
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20}
+.fab-menu{position:fixed;right:max(20px,calc(50% - 220px));bottom:calc(162px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;z-index:21;align-items:flex-end}
+.fab-menu .btn{background:var(--surface2);color:var(--fg);min-width:170px;justify-content:flex-start;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.fab-menu .btn:disabled{color:var(--faint);cursor:default}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs .inner{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:72px}
+nav.tabs button{border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;cursor:pointer;position:relative}
+nav.tabs button[aria-current="page"]{color:var(--accent-text);font-weight:600}
+nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;left:28%;right:28%;height:3px;background:var(--accent)}
+
+/* sheet */
+.overlay{position:fixed;inset:0;background:var(--overlay);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:480px;max-height:92%;overflow:auto;background:var(--surface);
+  padding:18px max(16px,env(safe-area-inset-left,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
+  clip-path:polygon(0 18px,18px 0,100% 0,100% 100%,0 100%)}
+.sheet h3{margin:0 0 14px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.field > label,.field > .lab{font-size:13px;color:var(--muted)}
+.input{background:var(--surface2);border:1px solid var(--line);padding:10px 12px;min-height:44px;width:100%}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{background:var(--surface2);border:1px solid var(--line);min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;text-align:center;padding:4px}
+.seg input:checked + label{border-color:currentColor;font-weight:700;box-shadow:inset 0 0 0 1px currentColor}
+.seg input:focus-visible + label{outline:2px solid var(--accent-text);outline-offset:2px}
+.check{display:flex;align-items:center;gap:12px;min-height:44px;padding:4px 0;cursor:pointer}
+.check input{width:22px;height:22px;accent-color:var(--accent)}
+.check small{color:var(--muted);font-size:12px}
+.req{color:var(--warn);font-size:11px;font-weight:600}
+.err{color:var(--accent-text);font-size:13px;min-height:1.2em}
+.sheet-actions{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:6px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(170px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;font-size:14px;z-index:60;max-width:90%}
+@media (prefers-reduced-motion: no-preference){
+  .sheet{animation:up .18s ease-out}
+  @keyframes up{from{transform:translateY(24px)}to{transform:none}}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <div class="date" id="todayLabel">&nbsp;</div>
+      <h1>สวัสดี แบงค์</h1>
+    </div>
+    <div class="head-actions">
+      <button class="theme-btn" type="button" id="themeBtn" aria-label="ธีม"></button>
+      <button class="badge" type="button" id="settingsBtn" aria-label="ตั้งค่า">MY LOG</button>
+    </div>
+  </header>
+  <div id="statusBanner" hidden class="banner"></div>
+  <div id="pendingBar" hidden class="pending-bar" role="status"><span id="pendingText"></span><button type="button" class="link-btn" id="flushBtn">ซิงค์ตอนนี้</button></div>
+  <main id="view" class="stack" aria-live="polite"></main>
+</div>
+
+<div class="fab-menu" id="fabMenu" hidden>
+  <button class="btn" type="button" id="fabLeave">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+    แจ้งลา
+  </button>
+  <button class="btn" type="button" disabled>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16"></path><path d="M3 21h13"></path><path d="M15 9h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3"></path></svg>
+    เติมน้ำมัน (เฟส 3)
+  </button>
+</div>
+<button class="fab" type="button" id="fab" aria-label="เพิ่มรายการ" aria-expanded="false" aria-controls="fabMenu">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+</button>
+
+<nav class="tabs" aria-label="เมนูหลัก">
+  <div class="inner">
+    <button type="button" data-tab="home">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"></path><path d="M5 10v10h14V10"></path></svg>หน้าแรก</button>
+    <button type="button" data-tab="leave">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>ลา</button>
+    <button type="button" data-tab="car">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="17" r="3"></circle><circle cx="18" cy="17" r="3"></circle><path d="M9 17h6l-3-7h4M6 17l3-6h3"></path></svg>รถ</button>
+    <button type="button" data-tab="summary">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>สรุป</button>
+  </div>
+</nav>
+
+<div id="sheetRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+/*LOGIC START*/
+const TH_M = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TH_MF = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TH_D = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+const TYPES = {
+  sick:     { label:'ป่วย',      full:'ลาป่วย' },
+  personal: { label:'กิจ',       full:'ลากิจ' },
+  vacation: { label:'พักร้อน',   full:'ลาพักร้อน' },
+  unknown:  { label:'ยังไม่ระบุ', full:'ยังไม่ระบุประเภท' }
+};
+const DOCS = { form:'ใบลา', cert:'ใบรับรองแพทย์', evidence:'หลักฐานประกอบ' };
+const QUOTA_DEFAULT = { sick:30, personal:6, vacation:6 };
+
+const pad = n => String(n).padStart(2,'0');
+const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+const addDays = (s,n) => { const d = parse(s); d.setDate(d.getDate()+n); return iso(d); };
+const dow = s => parse(s).getDay();
+const isWeekend = s => { const w = dow(s); return w===0 || w===6; };
+const daysBetween = (a,b) => Math.round((parse(b)-parse(a))/86400000);
+const beYear = y => y + 543;
+const fmtShort = s => { const d = parse(s); return d.getDate()+' '+TH_M[d.getMonth()]; };
+const fmtDay = s => { const d = parse(s); return TH_D[d.getDay()]+' '+d.getDate()+' '+TH_M[d.getMonth()]; };
+const fmtLong = s => { const d = parse(s); return TH_D[d.getDay()]+' '+d.getDate()+' '+TH_M[d.getMonth()]+' '+beYear(d.getFullYear()); };
+const monthKey = s => s.slice(0,7);
+const fmtMonth = key => { const [y,m] = key.split('-').map(Number); return TH_MF[m-1]+' '+beYear(y); };
+
+function holidayMap(list){ const m = new Map(); (list||[]).forEach(h => m.set(h.date, h.name)); return m; }
+function isWorkday(s, hmap){ return !isWeekend(s) && !hmap.has(s); }
+function leaveAmount(l){ return l.half ? 0.5 : 1; }
+
+function balances(leaves, quota, year){
+  const q = Object.assign({}, QUOTA_DEFAULT, quota||{});
+  const out = {};
+  ['sick','personal','vacation'].forEach(t => out[t] = { quota:q[t], used:0, left:q[t] });
+  let unknown = 0;
+  (leaves||[]).forEach(l => {
+    if (!l.date || Number(l.date.slice(0,4)) !== year) return;
+    if (l.type === 'unknown') { unknown += leaveAmount(l); return; }
+    if (out[l.type]) out[l.type].used += leaveAmount(l);
+  });
+  Object.values(out).forEach(o => o.left = o.quota - o.used);
+  return { ...out, unknown };
+}
+
+function adjacentToHoliday(date, hmap){
+  let p = addDays(date,-1); while (isWeekend(p)) p = addDays(p,-1);
+  let n = addDays(date, 1); while (isWeekend(n)) n = addDays(n, 1);
+  return hmap.has(p) || hmap.has(n);
+}
+function sickRunLength(date, leaves, hmap){
+  const sick = new Set((leaves||[]).filter(l => l.type==='sick').map(l => l.date));
+  if (!sick.has(date)) return 0;
+  const step = (s,dir) => { let x = addDays(s,dir); while (!isWorkday(x,hmap)) x = addDays(x,dir); return x; };
+  let len = 1, x = step(date,-1);
+  while (sick.has(x)) { len++; x = step(x,-1); }
+  x = step(date,1);
+  while (sick.has(x)) { len++; x = step(x,1); }
+  return len;
+}
+function requiredDocs(l, hmap, leaves){
+  if (l.type === 'personal') return ['form','evidence'];
+  if (l.type === 'vacation') return ['form'];
+  if (l.type === 'sick') {
+    const r = ['form'];
+    if (adjacentToHoliday(l.date, hmap) || sickRunLength(l.date, leaves, hmap) >= 3) r.push('cert');
+    return r;
+  }
+  return [];
+}
+function missingDocs(l, hmap, leaves){ return requiredDocs(l,hmap,leaves).filter(k => !(l.docs && l.docs[k])); }
+
+function lastWorkday(key, hmap){
+  const [y,m] = key.split('-').map(Number);
+  let s = iso(new Date(y, m, 0));
+  while (!isWorkday(s,hmap)) s = addDays(s,-1);
+  return s;
+}
+function nextHoliday(today, list){
+  return (list||[]).filter(h => h.date >= today).sort((a,b) => a.date < b.date ? -1 : 1)[0] || null;
+}
+function longBreak(date, hmap){
+  const off = s => isWeekend(s) || hmap.has(s);
+  let a = date, b = date;
+  while (off(addDays(a,-1))) a = addDays(a,-1);
+  while (off(addDays(b, 1))) b = addDays(b, 1);
+  return { start:a, end:b, days: daysBetween(a,b)+1 };
+}
+function monthsFrom(startKey, endKey){
+  const out = []; let [y,m] = startKey.split('-').map(Number);
+  const [ey,em] = endKey.split('-').map(Number);
+  while (y < ey || (y===ey && m<=em)) { out.push(y+'-'+pad(m)); m++; if (m>12){m=1;y++;} }
+  return out;
+}
+function buildTodos(state, today){
+  const hmap = holidayMap(state.holidays);
+  const todos = [];
+  const cur = monthKey(today);
+  const start = (state.settings && state.settings.startMonth) || '2026-03';
+  monthsFrom(start, cur).forEach(k => {
+    const ts = state.timesheets[k] || {};
+    if (ts.sent) return;
+    const due = lastWorkday(k, hmap);
+    const overdue = k < cur || today > due;
+    if (k === cur || overdue) {
+      todos.push({ kind:'timesheet', key:k, overdue,
+        title:'Timesheet '+TH_M[Number(k.slice(5))-1]+' '+(ts.signed ? 'เซ็นแล้ว รอส่ง HR' : 'ยังไม่ส่ง'),
+        sub: overdue ? 'เลยกำหนดส่ง '+fmtDay(due) : 'ส่ง HR ภายใน '+fmtDay(due) });
+    }
+  });
+  const unknowns = state.leaves.filter(l => l.type==='unknown').sort((a,b)=>a.date<b.date?-1:1);
+  if (unknowns.length) {
+    todos.push({ kind:'unknown', ids: unknowns.map(l=>l.id),
+      title: summarizeDates(unknowns.map(l=>l.date))+' ยังไม่มีใบลา',
+      sub: 'ขาดงานจาก Timeline · แตะเพื่อระบุประเภทลา' });
+  }
+  state.leaves.filter(l => l.type!=='unknown').sort((a,b)=>a.date<b.date?-1:1).forEach(l => {
+    const miss = missingDocs(l, hmap, state.leaves);
+    if (miss.length) todos.push({ kind:'docs', id:l.id,
+      title: TYPES[l.type].full+' '+fmtShort(l.date)+' ขาดเอกสาร',
+      sub: miss.map(k=>DOCS[k]).join(' · ') });
+  });
+  return todos;
+}
+function summarizeDates(dates){
+  if (!dates.length) return '';
+  if (dates.length === 1) return fmtShort(dates[0]);
+  const sameMonth = dates.every(d => monthKey(d) === monthKey(dates[0]));
+  const consecutive = dates.every((d,i) => i===0 || daysBetween(dates[i-1], d) === 1);
+  if (sameMonth && consecutive) { const a = parse(dates[0]), b = parse(dates[dates.length-1]);
+    return a.getDate()+'–'+b.getDate()+' '+TH_M[a.getMonth()]; }
+  return dates.length+' วัน';
+}
+function leaveSummaryText(state, year){
+  const b = balances(state.leaves, state.settings.quota, year);
+  const lines = ['สรุปการลา ปี '+beYear(year)];
+  ['sick','personal','vacation'].forEach(t => lines.push(TYPES[t].full+' ใช้ '+fmtNum(b[t].used)+'/'+b[t].quota+' เหลือ '+fmtNum(b[t].left)+' วัน'));
+  lines.push('');
+  state.leaves.filter(l => Number(l.date.slice(0,4))===year && l.type!=='unknown').sort((a,b)=>a.date<b.date?-1:1).forEach(l => {
+    let s = '- '+fmtLong(l.date)+' '+TYPES[l.type].full;
+    if (l.half) s += l.half==='am' ? ' (ครึ่งเช้า)' : ' (ครึ่งบ่าย)';
+    if (l.reason) s += ' – '+l.reason;
+    lines.push(s);
+  });
+  return lines.join('\n');
+}
+function fmtNum(n){ return Number.isInteger(n) ? String(n) : n.toFixed(1); }
+/*LOGIC END*/
+
+/* ---------- state & store ---------- */
+const SETTINGS_DEFAULT = () => ({ quota:{...QUOTA_DEFAULT}, startMonth:'2026-03' });
+const state = { leaves:[], holidays:[], timesheets:{}, settings:SETTINGS_DEFAULT(), loaded:{leaves:true,holidays:true,ts:true,settings:true} };
+
+/* ---------- local store (this phone) ---------- */
+const STORE_KEY = 'mylog.store.v1', SYNC_KEY = 'mylog.sync.v1';
+function loadJSON(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
+function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ return false; } }
+let store = loadJSON(STORE_KEY, null) || { docs:{}, dirty:[] };
+if (!store.docs || typeof store.docs !== 'object') store.docs = {};
+if (!Array.isArray(store.dirty)) store.dirty = [];
+let syncCfg = Object.assign({ url:'', token:'', since:null, lastSyncAt:null, lastError:'' }, loadJSON(SYNC_KEY, {}) || {});
+let storageOk = saveJSON(STORE_KEY, store);
+function persist(){ storageOk = saveJSON(STORE_KEY, store); }
+function saveSync(){ saveJSON(SYNC_KEY, syncCfg); }
+const nowIso = () => new Date().toISOString();
+function putDoc(path, data, deleted){
+  store.docs[path] = { data: deleted ? null : data, updatedAt: nowIso(), deleted: !!deleted };
+  if (!store.dirty.includes(path)) store.dirty.push(path);
+  persist();
+}
+async function commit(path, op, data){
+  putDoc(path, data, op === 'delete');
+  if (!storageOk) throw { code:'no_storage' };
+  render(); scheduleSync(1500);
+  return 'saved';
+}
+function recompute(){
+  const leaves = [], ts = {}, hol = []; let settings = SETTINGS_DEFAULT();
+  Object.entries(store.docs).forEach(([p, d]) => {
+    if (!d || d.deleted || !d.data) return;
+    const [c, id] = p.split('/');
+    if (c === 'leaves') { if (d.data.date && TYPES[d.data.type]) leaves.push({ id, ...d.data }); }
+    else if (c === 'timesheets') ts[id] = d.data;
+    else if (c === 'holidays') hol.push(...(d.data.days || []));
+    else if (p === 'settings/main') settings = Object.assign(SETTINGS_DEFAULT(), d.data);
+  });
+  state.leaves = leaves; state.timesheets = ts; state.holidays = hol; state.settings = settings;
+}
+
+/* ---------- Google Sheets sync (Apps Script) ---------- */
+let syncing = false, syncTimer = null, syncState = 'idle';
+const syncConfigured = () => !!(syncCfg.url && syncCfg.token);
+function scheduleSync(ms){ clearTimeout(syncTimer); if (syncConfigured()) syncTimer = setTimeout(() => sync(), ms); }
+async function callScript(body){
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), window.__SYNC_TIMEOUT || 20000);
+  try {
+    const res = await fetch(syncCfg.url, { method:'POST', body: JSON.stringify(body), signal: ctrl.signal, redirect:'follow' });
+    const txt = await res.text(); let j;
+    try { j = JSON.parse(txt); } catch(e){ throw { code:'bad_response' }; }
+    if (!j || !j.ok) throw { code: (j && j.error) || 'server_error' };
+    return j;
+  } catch(e){
+    if (e && e.name === 'AbortError') throw { code:'timeout' };
+    if (e && e.code) throw e;
+    throw { code:'network' };
+  } finally { clearTimeout(t); }
+}
+function syncErrMsg(e){
+  const c = e && e.code;
+  if (c === 'unauthorized') return 'รหัสลับไม่ตรงกับใน Apps Script';
+  if (c === 'bad_response') return 'ลิงก์ Apps Script ไม่ถูกต้อง หรือยังไม่ได้ Deploy ให้ Anyone เข้าถึง';
+  if (c === 'network' || c === 'timeout') return 'ไม่มีเน็ตหรือเชื่อมต่อ Google ไม่ได้ จะลองใหม่อัตโนมัติ';
+  return 'ซิงค์ไม่สำเร็จ ('+(c||'error')+')';
+}
+async function sync(manual){
+  if (!syncConfigured()) { updateSyncBar(); if (manual) toast('ยังไม่ได้ตั้งค่าซิงค์'); return false; }
+  if (syncing) return false;
+  if (navigator.onLine === false) { syncState = 'offline'; updateSyncBar(); if (manual) toast('ยังไม่มีเน็ต ข้อมูลยังอยู่ในเครื่อง จะซิงค์เมื่อเน็ตกลับมา'); return false; }
+  syncing = true; syncState = 'syncing'; updateSyncBar();
+  const sent = store.dirty.filter(p => store.docs[p]).map(p => ({ path:p, data:store.docs[p].data, updatedAt:store.docs[p].updatedAt, deleted:!!store.docs[p].deleted }));
+  let ok = false;
+  try {
+    const r = await callScript({ action:'sync', token:syncCfg.token, since:syncCfg.since, docs:sent });
+    store.dirty = store.dirty.filter(p => { const x = sent.find(d => d.path === p); return !x || !store.docs[p] || store.docs[p].updatedAt !== x.updatedAt; });
+    (r.docs || []).forEach(d => {
+      if (!d || !d.path || store.dirty.includes(d.path)) return;
+      const loc = store.docs[d.path];
+      if (!loc || String(loc.updatedAt) <= String(d.updatedAt)) store.docs[d.path] = { data: d.deleted ? null : d.data, updatedAt: d.updatedAt, deleted: !!d.deleted };
+    });
+    persist();
+    syncCfg.since = r.serverTime || syncCfg.since; syncCfg.lastSyncAt = nowIso(); syncCfg.lastError = ''; saveSync();
+    syncState = 'idle'; ok = true;
+    if (manual) toast('ซิงค์แล้ว');
+  } catch(e){
+    syncState = 'error'; syncCfg.lastError = (e && e.code) || 'error'; saveSync();
+    if (manual) toast(syncErrMsg(e));
+  } finally {
+    syncing = false; render();
+    if (store.dirty.length) scheduleSync(ok ? 1500 : 30000);
+  }
+  return ok;
+}
+function fmtTime(isoStr){ try { const d = new Date(isoStr); return d.getDate()+' '+TH_M[d.getMonth()]+' '+pad(d.getHours())+':'+pad(d.getMinutes()); } catch(e){ return ''; } }
+function updateSyncBar(){
+  const bar = document.getElementById('pendingBar'); if (!bar) return;
+  const n = store.dirty.length; let msg = '';
+  if (!syncConfigured()) msg = Object.keys(store.docs).length ? '<b>ข้อมูลอยู่ในเครื่องนี้เท่านั้น</b> · ตั้งค่าซิงค์เพื่อสำรองขึ้น Google Sheets' : '';
+  else if (syncState === 'syncing') msg = '';
+  else if (n && (syncState === 'offline' || navigator.onLine === false)) msg = '<b>รอซิงค์ '+n+' รายการ</b> · จะซิงค์เมื่อเน็ตกลับมา';
+  else if (syncState === 'error') msg = '<b>'+(n ? 'รอซิงค์ '+n+' รายการ' : 'ซิงค์ไม่สำเร็จ')+'</b> · '+esc(syncErrMsg({ code:syncCfg.lastError }));
+  bar.hidden = !msg;
+  if (msg) {
+    document.getElementById('pendingText').innerHTML = msg;
+    document.getElementById('flushBtn').textContent = syncConfigured() ? 'ซิงค์ตอนนี้' : 'ตั้งค่า';
+  }
+}
+const updatePendingBar = updateSyncBar;
+
+/* ---------- backup file ---------- */
+function exportData(){
+  const docs = {};
+  Object.entries(store.docs).forEach(([p, d]) => { if (d && !d.deleted && d.data) docs[p] = d.data; });
+  const blob = new Blob([JSON.stringify({ app:'mylog', version:1, exportedAt:nowIso(), docs }, null, 1)], { type:'application/json' });
+  const a = document.createElement('a'); const url = URL.createObjectURL(blob);
+  a.href = url; a.download = 'mylog-backup-'+TODAY()+'.json'; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  toast('ส่งออกไฟล์สำรองแล้ว');
+}
+function importData(text){
+  let j; try { j = JSON.parse(text); } catch(e){ return { ok:false, msg:'ไฟล์นี้ไม่ใช่ไฟล์สำรองของ My Log' }; }
+  if (!j || j.app !== 'mylog' || !j.docs || typeof j.docs !== 'object') return { ok:false, msg:'ไฟล์นี้ไม่ใช่ไฟล์สำรองของ My Log' };
+  const valid = /^(leaves|timesheets|holidays|settings|fuel|places|vehicle|months)\/[A-Za-z0-9_\-.~:@+]+$/;
+  let n = 0;
+  Object.entries(j.docs).forEach(([p, data]) => { if (valid.test(p) && data && typeof data === 'object') { putDoc(p, data, false); n++; } });
+  if (!storageOk) return { ok:false, msg:'เครื่องไม่ยอมให้เก็บข้อมูล' };
+  render(); scheduleSync(500);
+  return { ok:true, n };
+}
+function pickImportFile(){
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.addEventListener('change', () => {
+    const f = inp.files && inp.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { const r = importData(String(rd.result)); closeSheet(); toast(r.ok ? 'นำเข้าแล้ว '+r.n+' รายการ' : r.msg); };
+    rd.onerror = () => toast('อ่านไฟล์ไม่ได้ ลองใหม่อีกครั้ง');
+    rd.readAsText(f);
+  });
+  inp.click();
+}
+
+let tab = 'home';
+let calMonth = null;
+const TODAY = () => window.__TODAY || iso(new Date());
+
+const $ = (sel, root=document) => root.querySelector(sel);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function setTab(t){
+  tab = t;
+  try { history.replaceState(null,'','#'+t); } catch(e){}
+  document.querySelectorAll('nav.tabs button').forEach(b => { if (b.dataset.tab===t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  render();
+  window.scrollTo(0,0);
+}
+
+function gaugeSvg(left, quota, color){
+  const L = 131.9, frac = quota > 0 ? Math.max(0, Math.min(1, left/quota)) : 0;
+  return '<svg width="96" height="54" viewBox="0 0 100 56" aria-hidden="true">'+
+    '<path d="M8 50 A42 42 0 0 1 92 50" fill="none" stroke="var(--track)" stroke-width="8"></path>'+
+    '<path d="M8 50 A42 42 0 0 1 92 50" fill="none" stroke="'+color+'" stroke-width="8" stroke-dasharray="'+(L*frac).toFixed(1)+' 200"></path></svg>';
+}
+const ICON = {
+  warn:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"></path><path d="M12 10v4M12 17h.01"></path></svg>',
+  doc:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1"></rect><path d="M9 8h6M9 12h6M9 16h3"></path></svg>',
+  clock:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>',
+  chev:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>',
+  check:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--vac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>',
+  left:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>',
+  right:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>',
+  copy:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="1"></rect><path d="M5 15V4a1 1 0 0 1 1-1h11"></path></svg>'
+};
+
+/* ---------- views ---------- */
+function viewHome(){
+  const today = TODAY(), year = Number(today.slice(0,4));
+  const hmap = holidayMap(state.holidays);
+  const nh = nextHoliday(today, state.holidays);
+  let holidayHtml;
+  if (!state.loaded.holidays) holidayHtml = '<div class="card cut-2 holiday"><div><div class="lbl">วันหยุดถัดไป</div><div class="name muted">กำลังโหลด…</div></div></div>';
+  else if (!state.holidays.length) holidayHtml = '<div class="card cut-2 holiday"><div><div class="lbl">วันหยุดถัดไป</div><div class="name">ยังไม่มีข้อมูลวันหยุด</div><div class="sub">นำเข้าไฟล์สำรองหรือซิงค์ เพื่อดึงวันหยุดบริษัท</div></div></div>';
+  else if (!nh) holidayHtml = '<div class="card cut-2 holiday"><div><div class="lbl">วันหยุดถัดไป</div><div class="name">ไม่มีวันหยุดที่เหลือในปีนี้</div><div class="sub">ใส่วันหยุดปีถัดไปได้ในแท็บ ลา</div></div></div>';
+  else {
+    const d = daysBetween(today, nh.date), lb = longBreak(nh.date, hmap);
+    const sub = fmtDay(nh.date) + (lb.days >= 3 ? ' · หยุดยาว '+TH_D[dow(lb.start)].replace('.','')+'–'+TH_D[dow(lb.end)].replace('.','')+' '+lb.days+' วัน' : '');
+    holidayHtml = '<div class="card cut-2 holiday"><div><div class="lbl">วันหยุดถัดไป</div><div class="name">'+esc(nh.name)+'</div><div class="sub">'+sub+'</div></div>'+
+      '<div class="count">'+(d===0 ? '<b style="font-size:30px">วันนี้</b>' : '<b>'+d+'</b><span>วัน</span>')+'</div></div>';
+  }
+  const b = balances(state.leaves, state.settings.quota, year);
+  const g = (t,color) => '<div class="card cut-tr gauge'+(b[t].left<0?' over':'')+'">'+gaugeSvg(b[t].left,b[t].quota,color)+
+    '<div class="val">'+fmtNum(b[t].left)+'</div><div class="t c-'+t+'" style="border:0">'+TYPES[t].label+'</div><div class="u">ใช้ '+fmtNum(b[t].used)+' / '+b[t].quota+'</div></div>';
+  const todos = Object.keys(store.docs).length ? buildTodos(state, today) : [];
+  const todoHtml = !state.loaded.leaves ? '<div class="all-done">กำลังโหลด…</div>' :
+    todos.length ? todos.map((t,i) => '<button type="button" class="todo-item'+(t.overdue?' overdue':'')+'" data-todo="'+i+'">'+
+      (t.kind==='timesheet' ? ICON.clock : t.kind==='docs' ? ICON.doc : ICON.warn)+
+      '<span class="tx"><b>'+esc(t.title)+'</b><span>'+esc(t.sub)+'</span></span>'+ICON.chev+'</button>').join('')
+    : '<div class="all-done">'+ICON.check+'ไม่มีอะไรค้าง</div>';
+  const cur = monthKey(today);
+  const monthLeave = state.leaves.filter(l => monthKey(l.date)===cur).reduce((s,l)=>s+leaveAmount(l),0);
+  const onboard = Object.keys(store.docs).length ? '' :
+    '<div class="card cut-2 onboard"><b>เริ่มต้นใช้งาน</b><p>ยังไม่มีข้อมูลในเครื่องนี้ ตั้งค่าซิงค์กับ Google Sheets เพื่อดึงข้อมูล หรือนำเข้าไฟล์สำรอง</p>'+
+    '<div class="tool-row"><button type="button" class="btn btn-primary" id="obSync">ตั้งค่าซิงค์</button><button type="button" class="btn btn-ghost" id="obImport">นำเข้าไฟล์</button></div></div>';
+  return onboard + holidayHtml +
+    '<div class="sec-h"><h2>ยอดลาคงเหลือ</h2><span class="aside">ปี '+beYear(year)+(b.unknown?' · รอระบุ '+fmtNum(b.unknown)+' วัน':'')+'</span></div>'+
+    '<div class="gauges">'+g('sick','var(--sick)')+g('personal','var(--personal)')+g('vacation','var(--vac)')+'</div>'+
+    '<div class="sec-h"><h2>ต้องทำ</h2>'+(todos.length?'<span class="aside">'+todos.length+' รายการ</span>':'')+'</div>'+
+    '<div class="todo" id="todoList">'+todoHtml+'</div>'+
+    '<div class="sec-h"><h2>เดือนนี้ · '+TH_M[Number(cur.slice(5))-1]+'</h2></div>'+
+    '<div class="card cut-br month-strip">'+
+      '<div><span class="k">วันลา</span><span class="v">'+fmtNum(monthLeave)+'<small> วัน</small></span></div>'+
+      '<div><span class="k">ระยะทาง</span><span class="v na">—</span><span class="note">เฟส 2</span></div>'+
+      '<div><span class="k">ค่าน้ำมัน</span><span class="v na">—</span><span class="note">เฟส 3</span></div>'+
+    '</div>';
+}
+
+function viewLeave(){
+  const today = TODAY(), year = Number(today.slice(0,4));
+  if (!calMonth) calMonth = monthKey(today);
+  const hmap = holidayMap(state.holidays);
+  const byDate = new Map(); state.leaves.forEach(l => byDate.set(l.date, l));
+  const [y,m] = calMonth.split('-').map(Number);
+  const first = new Date(y,m-1,1), daysIn = new Date(y,m,0).getDate();
+  let cells = TH_D.map(d => '<div class="cal-dow">'+d.replace('.','')+'</div>').join('');
+  for (let i=0;i<first.getDay();i++) cells += '<div class="cal-day empty" aria-hidden="true"></div>';
+  for (let d=1; d<=daysIn; d++){
+    const s = y+'-'+pad(m)+'-'+pad(d);
+    const l = byDate.get(s);
+    let cls = 'cal-day', label = fmtLong(s), dot = '';
+    if (l) { cls += ' lv '+l.type+(l.half?' half':''); label += ' '+TYPES[l.type].full;
+      if (l.type!=='unknown' && missingDocs(l,hmap,state.leaves).length) { dot = '<span class="dot" aria-hidden="true"></span>'; label += ' ขาดเอกสาร'; } }
+    else if (hmap.has(s)) { cls += ' hol'; label += ' วันหยุด '+hmap.get(s); }
+    else if (isWeekend(s)) cls += ' we';
+    if (s === today) cls += ' today';
+    const disabled = !l && !isWorkday(s,hmap);
+    cells += '<button type="button" class="'+cls+'" data-day="'+s+'" aria-label="'+esc(label)+'"'+(disabled?' disabled':'')+'>'+d+dot+'</button>';
+  }
+  const startKey = (state.settings.startMonth||'2026-03');
+  const calendar = '<div class="card cut-tr cal">'+
+    '<div class="cal-head"><button type="button" class="icon-btn" id="calPrev" aria-label="เดือนก่อนหน้า"'+(calMonth<=startKey?' disabled':'')+'>'+ICON.left+'</button>'+
+    '<b>'+fmtMonth(calMonth)+'</b><button type="button" class="icon-btn" id="calNext" aria-label="เดือนถัดไป"'+(calMonth>=year+'-12'?' disabled':'')+'>'+ICON.right+'</button></div>'+
+    '<div class="cal-grid">'+cells+'</div>'+
+    '<div class="legend"><span><i class="bg-sick"></i>ป่วย</span><span><i class="bg-personal"></i>กิจ</span><span><i class="bg-vacation"></i>พักร้อน</span>'+
+    '<span><i style="box-shadow:inset 0 0 0 1px var(--accent)"></i>วันหยุด</span><span><i style="background:var(--warn);width:6px;height:6px"></i>ขาดเอกสาร</span></div>'+
+    '<p class="muted" style="font-size:12px;margin:10px 0 0">แตะวันทำงานเพื่อแจ้งลา แตะวันที่ลาแล้วเพื่อแก้ไข</p></div>';
+
+  const ys = state.leaves.filter(l => Number(l.date.slice(0,4))===year).sort((a,b)=>a.date>b.date?-1:1);
+  let list = '';
+  if (!state.loaded.leaves) list = '<div class="all-done">กำลังโหลด…</div>';
+  else if (!ys.length) list = '<div class="card placeholder"><b>ยังไม่มีการลาในปีนี้</b><p>กดปุ่ม + หรือแตะวันในปฏิทินเพื่อแจ้งลา</p></div>';
+  else {
+    let curM = '';
+    ys.forEach(l => {
+      const mk = monthKey(l.date);
+      if (mk !== curM) { if (curM) list += '</div>'; curM = mk; list += '<div class="lv-month">'+fmtMonth(mk)+'</div><div class="lv-list card">'; }
+      const miss = l.type==='unknown' ? [] : missingDocs(l,hmap,state.leaves);
+      const req = requiredDocs(l,hmap,state.leaves);
+      const d = parse(l.date);
+      list += '<button type="button" class="lv-row" data-leave="'+esc(l.id)+'">'+
+        '<span class="d"><b>'+d.getDate()+'</b><span>'+TH_D[d.getDay()]+'</span></span>'+
+        '<span class="m"><span><span class="chip c-'+l.type+'">'+TYPES[l.type].full+(l.half?(l.half==='am'?' · ครึ่งเช้า':' · ครึ่งบ่าย'):'')+'</span>'+(l._pending?'<span class="tag-pending">รอส่ง</span>':'')+'</span>'+
+        (l.reason ? '<span class="r">'+esc(l.reason)+'</span>' : '')+
+        (l.type==='unknown' ? '<span class="flag">ยังไม่ระบุประเภท</span>' : miss.length ? '<span class="flag">ขาด '+miss.map(k=>DOCS[k]).join(', ')+'</span>' : req.length ? '<span class="ok">เอกสารครบ</span>' : '')+
+        '</span>'+ICON.chev+'</button>';
+    });
+    list += '</div>';
+  }
+
+  const tsKeys = monthsFrom(startKey, monthKey(today)).reverse();
+  const tsHtml = tsKeys.map(k => { const ts = state.timesheets[k]||{};
+    return '<button type="button" class="ts-row" data-ts="'+k+'"><span>'+fmtMonth(k)+(ts._pending?'<span class="tag-pending">รอส่ง</span>':'')+'</span><span class="st">'+
+      '<span class="'+(ts.signed?'ok-t':'no-t')+'">'+(ts.signed?'เซ็นแล้ว':'ยังไม่เซ็น')+'</span><span class="muted">·</span>'+
+      '<span class="'+(ts.sent?'ok-t':'no-t')+'">'+(ts.sent?'ส่ง HR แล้ว':'ยังไม่ส่ง')+'</span></span></button>'; }).join('');
+
+  const hols = (state.holidays||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
+  const holHtml = hols.length ? hols.map(h => '<div class="hol-row'+(h.date<today?' past':'')+'"><span>'+esc(h.name)+'</span><span class="num">'+fmtDay(h.date)+'</span></div>').join('')
+    : '<div class="all-done">ยังไม่มีข้อมูลวันหยุด</div>';
+
+  return calendar +
+    '<div class="sec-h"><h2>การลาปี '+beYear(year)+'</h2><button type="button" class="link-btn" id="copySummary">'+ICON.copy.replace('<svg','<svg style="vertical-align:-3px;margin-right:4px"')+'คัดลอกสรุปส่ง HR</button></div>'+
+    '<div>'+list+'</div>'+
+    '<div class="sec-h"><h2>Timesheet</h2><span class="aside">แตะเพื่ออัปเดตสถานะ</span></div>'+
+    '<div class="card">'+tsHtml+'</div>'+
+    '<div class="sec-h"><h2>วันหยุดบริษัท '+beYear(year)+'</h2><span class="aside">'+hols.filter(h=>h.date>=today).length+' วันที่เหลือ</span></div>'+
+    '<div class="card">'+holHtml+'</div>';
+}
+
+function viewCar(){
+  return '<div class="card cut-2 placeholder"><b>รถ · มาในเฟส 3</b><p>บันทึกเติมน้ำมันแบบเร็ว คำนวณ กม./ลิตร และเตือนรอบดูแล ADV160</p>'+
+    '<ul><li>เติมน้ำมัน: ยอดเงิน + ลิตร</li><li>รอบน้ำมันเครื่อง เฟืองท้าย ยาง</li><li>เตือนต่อประกัน ภาษี พ.ร.บ.</li></ul></div>';
+}
+function viewSummary(){
+  return '<div class="card cut-2 placeholder"><b>สรุปรายเดือน · มาในเฟส 2</b><p>นำเข้าไฟล์ Timeline ทุกสิ้นเดือน แล้วรวมการลา ระยะทาง และสถานที่ไว้หน้าเดียว</p>'+
+    '<ul><li>หาวันขาดงานที่ยังไม่มีใบลาให้อัตโนมัติ</li><li>ระยะทาง วันธรรมดา / เสาร์-อาทิตย์</li><li>สถานที่ที่ไปบ่อย พร้อมชื่อ</li></ul></div>';
+}
+
+function render(){
+  recompute(); updatePendingBar();
+  const t = TODAY();
+  $('#todayLabel').textContent = fmtLong(t);
+  const v = $('#view');
+  v.innerHTML = tab==='home' ? viewHome() : tab==='leave' ? viewLeave() : tab==='car' ? viewCar() : viewSummary();
+  bindView();
+}
+
+function bindView(){
+  const v = $('#view');
+  v.querySelectorAll('[data-todo]').forEach(btn => btn.addEventListener('click', () => {
+    const todos = buildTodos(state, TODAY()); const t = todos[Number(btn.dataset.todo)]; if (!t) return;
+    if (t.kind==='timesheet') openTimesheet(t.key);
+    else if (t.kind==='unknown') openLeave(state.leaves.find(l => l.id===t.ids[0]));
+    else openLeave(state.leaves.find(l => l.id===t.id));
+  }));
+  v.querySelectorAll('[data-leave]').forEach(btn => btn.addEventListener('click', () => openLeave(state.leaves.find(l => l.id===btn.dataset.leave))));
+  v.querySelectorAll('[data-day]').forEach(btn => btn.addEventListener('click', () => {
+    const l = state.leaves.find(x => x.date===btn.dataset.day);
+    openLeave(l || null, btn.dataset.day);
+  }));
+  v.querySelectorAll('[data-ts]').forEach(btn => btn.addEventListener('click', () => openTimesheet(btn.dataset.ts)));
+  const p = $('#calPrev'), n = $('#calNext');
+  if (p) p.addEventListener('click', () => { calMonth = shiftMonth(calMonth,-1); render(); });
+  if (n) n.addEventListener('click', () => { calMonth = shiftMonth(calMonth, 1); render(); });
+  const ob1 = $('#obSync'), ob2 = $('#obImport');
+  if (ob1) ob1.addEventListener('click', openSettings);
+  if (ob2) ob2.addEventListener('click', pickImportFile);
+  const c = $('#copySummary');
+  if (c) c.addEventListener('click', () => copyText(leaveSummaryText(state, Number(TODAY().slice(0,4)))));
+}
+function shiftMonth(k, n){ let [y,m] = k.split('-').map(Number); m += n; if (m<1){m=12;y--;} if (m>12){m=1;y++;} return y+'-'+pad(m); }
+
+function toast(msg){
+  const r = $('#toastRoot'); r.innerHTML = '<div class="toast" role="status">'+esc(msg)+'</div>';
+  clearTimeout(toast._t); toast._t = setTimeout(() => r.innerHTML = '', 2400);
+}
+function copyText(text){
+  const fallback = () => { openSheet('<h3>คัดลอกสรุป</h3><p class="muted" style="font-size:13px;margin:0 0 8px">กดค้างที่ข้อความเพื่อเลือกทั้งหมด แล้วคัดลอก</p><textarea class="input" id="copyArea" rows="12" readonly>'+esc(text)+'</textarea><div class="sheet-actions"><span></span><button type="button" class="btn btn-ghost" data-close>ปิด</button></div>');
+    const a = $('#copyArea'); a.focus(); a.select(); };
+  try { navigator.clipboard.writeText(text).then(() => toast('คัดลอกสรุปแล้ว วางในไลน์ได้เลย'), fallback); } catch(e){ fallback(); }
+}
+
+function writeErrMsg(ex){
+  const c = ex && ex.code;
+  if (c === 'quota_exceeded') return 'ที่เก็บข้อมูลเต็ม ลบรายการเก่าที่ไม่ใช้ก่อน';
+  if (c === 'no_storage') return 'บันทึกไม่ได้ เพราะสัญญาณหลุดและเครื่องไม่ยอมให้เก็บข้อมูลชั่วคราว ลองใหม่เมื่อมีเน็ต';
+  return 'บันทึกไม่สำเร็จ ลองกดบันทึกอีกครั้ง';
+}
+
+/* ---------- sheets ---------- */
+let lastFocus = null;
+function openSheet(html){
+  lastFocus = document.activeElement;
+  $('#sheetRoot').innerHTML = '<div class="overlay" id="overlay"><div class="sheet" role="dialog" aria-modal="true">'+html+'</div></div>';
+  const ov = $('#overlay');
+  ov.addEventListener('click', e => { if (e.target === ov) closeSheet(); });
+  ov.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheet));
+  ov.addEventListener('keydown', e => { if (e.key==='Escape') closeSheet(); });
+  const f = ov.querySelector('input,select,textarea,button'); if (f) f.focus();
+}
+function closeSheet(){ $('#sheetRoot').innerHTML = ''; if (lastFocus && lastFocus.focus) try{ lastFocus.focus(); }catch(e){} }
+
+function openLeave(l, presetDate){
+  const isNew = !l;
+  const cur = l ? { ...l, docs:{...(l.docs||{})} } : { date: presetDate || TODAY(), type:'sick', half:false, reason:'', docs:{} };
+  const typeSeg = ['sick','personal','vacation','unknown'].map(t => '<input type="radio" name="lvType" id="lt_'+t+'" value="'+t+'"'+(cur.type===t?' checked':'')+'><label for="lt_'+t+'" class="c-'+t+'">'+TYPES[t].label+'</label>').join('');
+  const halfSeg = [['full','เต็มวัน'],['am','ครึ่งเช้า'],['pm','ครึ่งบ่าย']].map(([v,lab]) => '<input type="radio" name="lvHalf" id="lh_'+v+'" value="'+v+'"'+(((cur.half||'full')===v)?' checked':'')+'><label for="lh_'+v+'">'+lab+'</label>').join('');
+  openSheet(
+    '<h3>'+(isNew?'แจ้งลา':'แก้ไขการลา')+'<button type="button" class="icon-btn" data-close aria-label="ปิด"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></h3>'+
+    '<form id="leaveForm" novalidate>'+
+    '<div class="field"><label for="lvDate">วันที่</label><input class="input num" type="date" id="lvDate" value="'+esc(cur.date)+'" required></div>'+
+    '<div class="field"><span class="lab" id="lvTypeLab">ประเภท</span><div class="seg" role="radiogroup" aria-labelledby="lvTypeLab">'+typeSeg+'</div></div>'+
+    '<div class="field"><span class="lab" id="lvHalfLab">ระยะเวลา</span><div class="seg" role="radiogroup" aria-labelledby="lvHalfLab">'+halfSeg+'</div></div>'+
+    '<div class="field"><label for="lvReason">เหตุผล (ไม่บังคับ)</label><input class="input" type="text" id="lvReason" maxlength="120" value="'+esc(cur.reason)+'" placeholder="เช่น ไปหาหมอ, สอบโปรเจค"></div>'+
+    '<div class="field" id="docsField"></div>'+
+    '<p class="err" id="lvErr" role="alert"></p>'+
+    '<div class="sheet-actions">'+(isNew?'<span></span>':'<button type="button" class="btn btn-danger" id="lvDelete">ลบ</button>')+
+    '<button type="submit" class="btn btn-primary">'+(isNew?'บันทึก':'บันทึกการแก้ไข')+'</button></div>'+
+    '</form>');
+  const form = $('#leaveForm');
+  const read = () => ({ ...cur,
+    date: $('#lvDate').value,
+    type: form.querySelector('input[name=lvType]:checked').value,
+    half: (v => v==='full' ? false : v)(form.querySelector('input[name=lvHalf]:checked').value),
+    reason: $('#lvReason').value.trim(),
+    docs: Object.fromEntries(['form','cert','evidence'].map(k => [k, !!(form.querySelector('#doc_'+k) && form.querySelector('#doc_'+k).checked) || (!form.querySelector('#doc_'+k) && !!cur.docs[k])])) });
+  const drawDocs = () => {
+    const x = read(); const hmap = holidayMap(state.holidays);
+    const others = state.leaves.filter(o => o.id !== cur.id).concat([x]);
+    const req = requiredDocs(x, hmap, others);
+    const show = x.type==='unknown' ? [] : x.type==='sick' ? ['form','cert'] : x.type==='personal' ? ['form','evidence'] : ['form'];
+    $('#docsField').innerHTML = show.length ? '<span class="lab">เอกสาร</span>'+show.map(k =>
+      '<label class="check"><input type="checkbox" id="doc_'+k+'"'+(x.docs[k]?' checked':'')+'><span>ส่ง'+DOCS[k]+'แล้ว'+(req.includes(k)?' <span class="req">จำเป็น</span>':'')+
+      (k==='cert' && req.includes('cert') ? '<br><small>ลาป่วยติดวันหยุด หรือติดกัน 3 วันขึ้นไป</small>':'')+'</span></label>').join('')
+      : '<span class="lab">เอกสาร</span><span class="muted" style="font-size:13px">เลือกประเภทลาก่อน แล้วจะขึ้นรายการเอกสารที่ต้องส่ง</span>';
+  };
+  drawDocs();
+  form.addEventListener('change', e => { if (e.target.name==='lvType' || e.target.id==='lvDate') { const keep = read(); cur.docs = keep.docs; drawDocs(); } });
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const x = read(); const err = $('#lvErr'); err.textContent = '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(x.date)) { err.textContent = 'เลือกวันที่ก่อนบันทึก'; return; }
+    const hmap = holidayMap(state.holidays);
+    if (!isWorkday(x.date, hmap)) { err.textContent = fmtLong(x.date)+' เป็นวันหยุดอยู่แล้ว ไม่ต้องแจ้งลา'; return; }
+    const clash = state.leaves.find(o => o.id !== cur.id && o.date === x.date);
+    if (clash && !(clash.half && x.half && clash.half !== x.half)) { err.textContent = 'มีการลาวันที่ '+fmtShort(x.date)+' อยู่แล้ว แตะวันนั้นในปฏิทินเพื่อแก้ไขแทน'; return; }
+    const id = cur.id || ('l_'+x.date+'_'+Math.random().toString(36).slice(2,7));
+    const body = { date:x.date, type:x.type, half:x.half, reason:x.reason, docs:x.docs, source:cur.source||'manual', updatedAt:new Date().toISOString() };
+    const btn = form.querySelector('button[type=submit]'); btn.disabled = true;
+    try { const r = await commit('leaves/'+id, 'set', body); closeSheet(); toast(r==='saved' ? (isNew?'บันทึกการลาแล้ว':'บันทึกการแก้ไขแล้ว') : 'สัญญาณไม่ดี บันทึกไว้ในเครื่องแล้ว จะส่งเองเมื่อเน็ตกลับมา'); }
+    catch(ex){ btn.disabled = false; err.textContent = writeErrMsg(ex); }
+  });
+  const del = $('#lvDelete');
+  if (del) del.addEventListener('click', async () => {
+    if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'แตะอีกครั้งเพื่อลบ'; return; }
+    del.disabled = true;
+    try { const r = await commit('leaves/'+cur.id, 'delete'); closeSheet(); toast(r==='saved' ? 'ลบการลาแล้ว' : 'สัญญาณไม่ดี จะลบให้เมื่อเน็ตกลับมา'); }
+    catch(ex){ del.disabled = false; $('#lvErr').textContent = writeErrMsg(ex); }
+  });
+}
+
+function openTimesheet(key){
+  const ts = state.timesheets[key] || {};
+  const due = lastWorkday(key, holidayMap(state.holidays));
+  openSheet('<h3>Timesheet '+fmtMonth(key)+'<button type="button" class="icon-btn" data-close aria-label="ปิด"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></h3>'+
+    '<p class="muted" style="margin:0 0 10px;font-size:13px">กำหนดส่ง HR: '+fmtLong(due)+'</p>'+
+    '<form id="tsForm"><label class="check"><input type="checkbox" id="tsSigned"'+(ts.signed?' checked':'')+'><span>หัวหน้าเซ็นแล้ว</span></label>'+
+    '<label class="check"><input type="checkbox" id="tsSent"'+(ts.sent?' checked':'')+'><span>ส่ง HR แล้ว</span></label>'+
+    '<p class="err" id="tsErr" role="alert"></p><div class="sheet-actions"><span></span><button type="submit" class="btn btn-primary">บันทึก</button></div></form>');
+  $('#tsForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const signed = $('#tsSigned').checked, sent = $('#tsSent').checked;
+    try { const r = await commit('timesheets/'+key, 'set', { month:key, signed: signed || sent, sent, updatedAt:new Date().toISOString() }); closeSheet(); toast(r==='saved' ? 'อัปเดต Timesheet แล้ว' : 'สัญญาณไม่ดี บันทึกไว้ในเครื่องแล้ว จะส่งเองเมื่อเน็ตกลับมา'); }
+    catch(ex){ $('#tsErr').textContent = writeErrMsg(ex); }
+  });
+}
+
+function openSettings(){
+  const q = Object.assign({}, QUOTA_DEFAULT, state.settings.quota||{});
+  const status = !syncConfigured() ? '<p class="sync-status">ยังไม่ได้ตั้งค่า ข้อมูลอยู่ในเครื่องนี้เท่านั้น</p>'
+    : syncCfg.lastError ? '<p class="sync-status bad">'+esc(syncErrMsg({ code:syncCfg.lastError }))+'</p>'
+    : '<p class="sync-status">ซิงค์ล่าสุด '+(syncCfg.lastSyncAt ? fmtTime(syncCfg.lastSyncAt) : '—')+(store.dirty.length ? ' · รอซิงค์ '+store.dirty.length+' รายการ' : '')+'</p>';
+  openSheet('<h3>ตั้งค่า<button type="button" class="icon-btn" data-close aria-label="ปิด"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></h3>'+
+    '<form id="qForm"><h4 style="margin:0 0 10px;font-size:15px">โควตาลาต่อปี</h4>'+
+    ['sick','personal','vacation'].map(t => '<div class="field"><label for="q_'+t+'">'+TYPES[t].full+' (วัน)</label><input class="input num" type="number" inputmode="decimal" min="0" max="365" step="0.5" id="q_'+t+'" value="'+q[t]+'"></div>').join('')+
+    '<p class="muted" style="font-size:12px;margin:0 0 10px">ยอดลานับตามปีปฏิทิน เริ่มใหม่ทุก 1 ม.ค.</p>'+
+    '<p class="err" id="qErr" role="alert"></p><div class="sheet-actions"><span></span><button type="submit" class="btn btn-primary">บันทึกโควตา</button></div></form>'+
+    '<form id="sForm" class="set-sec" novalidate><h4>ซิงค์กับ Google Sheets</h4>'+status+
+    '<div class="field"><label for="sUrl">ลิงก์ Apps Script (Web app URL)</label><input class="input" type="url" id="sUrl" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec" value="'+esc(syncCfg.url)+'"></div>'+
+    '<div class="field"><label for="sToken">รหัสลับ</label><input class="input" type="password" id="sToken" autocomplete="off" spellcheck="false" value="'+esc(syncCfg.token)+'"></div>'+
+    '<p class="err" id="sErr" role="alert"></p><div class="sheet-actions">'+(syncConfigured()?'<button type="button" class="btn btn-danger" id="sOff">ปิดซิงค์</button>':'<span></span>')+
+    '<button type="submit" class="btn btn-primary">บันทึกและทดสอบ</button></div></form>'+
+    '<div class="set-sec"><h4>สำรองข้อมูล</h4><p class="muted" style="font-size:13px;margin:0 0 10px">ไฟล์สำรองเก็บข้อมูลทั้งหมดในเครื่องนี้ นำเข้าแล้วจะรวมกับข้อมูลที่มีอยู่</p>'+
+    '<div class="tool-row"><button type="button" class="btn btn-ghost" id="bExport">ส่งออกไฟล์</button><button type="button" class="btn btn-ghost" id="bImport">นำเข้าไฟล์</button></div></div>');
+  $('#qForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const quota = {}; let bad = false;
+    ['sick','personal','vacation'].forEach(t => { const v = Number($('#q_'+t).value); if (!(v>=0 && v<=365)) bad = true; quota[t] = v; });
+    if (bad) { $('#qErr').textContent = 'ใส่จำนวนวันระหว่าง 0–365'; return; }
+    try { await commit('settings/main', 'set', { quota, startMonth: state.settings.startMonth || '2026-03' }); closeSheet(); toast('บันทึกโควตาแล้ว'); }
+    catch(ex){ $('#qErr').textContent = writeErrMsg(ex); }
+  });
+  $('#sForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const url = $('#sUrl').value.trim(), token = $('#sToken').value.trim(), err = $('#sErr');
+    err.textContent = '';
+    if (!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(url)) { err.textContent = 'ลิงก์ต้องขึ้นต้นด้วย https://script.google.com/'; return; }
+    if (token.length < 8) { err.textContent = 'ใส่รหัสลับให้ตรงกับใน Apps Script'; return; }
+    const changed = url !== syncCfg.url || token !== syncCfg.token;
+    syncCfg.url = url; syncCfg.token = token; if (changed) syncCfg.since = null;
+    Object.keys(store.docs).forEach(p => { if (changed && !store.dirty.includes(p)) store.dirty.push(p); });
+    persist(); saveSync();
+    const btn = e.target.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'กำลังทดสอบ…';
+    const ok = await sync();
+    btn.disabled = false; btn.textContent = 'บันทึกและทดสอบ';
+    if (ok) { closeSheet(); toast('เชื่อม Google Sheets สำเร็จ'); }
+    else err.textContent = syncErrMsg({ code:syncCfg.lastError });
+  });
+  const off = $('#sOff');
+  if (off) off.addEventListener('click', () => {
+    if (!off.classList.contains('armed')) { off.classList.add('armed'); off.textContent = 'แตะอีกครั้งเพื่อปิด'; return; }
+    syncCfg = { url:'', token:'', since:null, lastSyncAt:null, lastError:'' }; saveSync(); closeSheet(); render(); toast('ปิดซิงค์แล้ว ข้อมูลยังอยู่ในเครื่อง');
+  });
+  $('#bExport').addEventListener('click', exportData);
+  $('#bImport').addEventListener('click', pickImportFile);
+}
+
+/* ---------- theme ---------- */
+const THEME_KEY = 'mylog.theme';
+const THEME_ORDER = ['auto','dark','light'];
+const THEME_LABEL = { auto:'อัตโนมัติ (ตามมือถือ)', dark:'มืด', light:'สว่าง' };
+const THEME_ICON = {
+  auto:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"></path></svg>',
+  dark:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>',
+  light:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>'
+};
+const rootEl = document.documentElement;
+let hostTheme = null;
+let themeChoice = 'auto';
+try { const t = localStorage.getItem(THEME_KEY); if (THEME_ORDER.includes(t)) themeChoice = t; } catch(e){}
+let applyingTheme = false;
+function applyTheme(){
+  applyingTheme = true;
+  const want = themeChoice === 'auto' ? hostTheme : themeChoice;
+  if (want) rootEl.setAttribute('data-theme', want); else rootEl.removeAttribute('data-theme');
+  applyingTheme = false;
+  const b = document.getElementById('themeBtn');
+  b.innerHTML = THEME_ICON[themeChoice];
+  b.setAttribute('aria-label', 'ธีม: '+THEME_LABEL[themeChoice]+' · แตะเพื่อเปลี่ยน');
+  b.title = 'ธีม: '+THEME_LABEL[themeChoice];
+  requestAnimationFrame(() => { try { document.getElementById('themeColor').setAttribute('content', getComputedStyle(document.body).backgroundColor); } catch(e){} });
+}
+try { matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => applyTheme()); } catch(e){}
+new MutationObserver(() => {
+  if (applyingTheme) return;
+  const cur = rootEl.getAttribute('data-theme');
+  if (themeChoice === 'auto') { hostTheme = cur; return; }
+  if (cur !== themeChoice) { hostTheme = cur; applyTheme(); }
+}).observe(rootEl, { attributes:true, attributeFilter:['data-theme'] });
+document.getElementById('themeBtn').addEventListener('click', () => {
+  themeChoice = THEME_ORDER[(THEME_ORDER.indexOf(themeChoice)+1) % THEME_ORDER.length];
+  try { localStorage.setItem(THEME_KEY, themeChoice); } catch(e){}
+  applyTheme(); toast('ธีม: '+THEME_LABEL[themeChoice]);
+});
+applyTheme();
+
+/* ---------- fab ---------- */
+function toggleFab(open){
+  const m = $('#fabMenu'), f = $('#fab');
+  const o = open === undefined ? m.hidden : open;
+  m.hidden = !o; f.setAttribute('aria-expanded', String(o));
+}
+$('#fab').addEventListener('click', () => toggleFab());
+$('#fabLeave').addEventListener('click', () => { toggleFab(false); openLeave(null); });
+document.addEventListener('click', e => { if (!$('#fabMenu').hidden && !e.target.closest('#fabMenu') && !e.target.closest('#fab')) toggleFab(false); });
+$('#settingsBtn').addEventListener('click', openSettings);
+$('#flushBtn').addEventListener('click', () => { if (syncConfigured()) sync(true); else openSettings(); });
+window.addEventListener('online', () => sync());
+window.addEventListener('offline', () => { syncState = 'offline'; updateSyncBar(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') sync(); });
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+/* ---------- boot ---------- */
+function showBanner(msg){ const b = $('#statusBanner'); b.textContent = msg; b.hidden = !msg; }
+async function boot(){
+  const h = (location.hash||'').slice(1);
+  if (['home','leave','car','summary'].includes(h)) tab = h;
+  if (!storageOk) showBanner('เครื่องไม่ยอมให้แอปเก็บข้อมูล ข้อมูลที่บันทึกจะหายเมื่อปิดแอป');
+  setTab(tab);
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => {});
+  sync();
+  setInterval(() => { if (document.visibilityState === 'visible') sync(); }, 120000);
+}
+boot();
+</script>
+</body>
+</html>
