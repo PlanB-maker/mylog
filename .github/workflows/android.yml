@@ -71,13 +71,18 @@ jobs:
         run: |
           APK=$(ls mylog-*.apk | head -1)
           AAPT=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2
-          echo "APK: $APK ($(du -h "$APK" | cut -f1))"
-          "$AAPT" dump badging "$APK" | grep -E "^package:|^sdkVersion|^targetSdkVersion|^application-label:|uses-permission" 
-          "$AAPT" dump badging "$APK" | grep -q "USE_EXACT_ALARM" || { echo "::error::USE_EXACT_ALARM missing"; exit 1; }
-          "$AAPT" dump badging "$APK" | grep -q "POST_NOTIFICATIONS" || { echo "::error::POST_NOTIFICATIONS missing"; exit 1; }
-          unzip -p "$APK" assets/capacitor.plugins.json
-          unzip -p "$APK" assets/public/index.html | grep -o "const APP_VERSION = '[^']*';"
-          unzip -l "$APK" | grep -E "ic_stat_mylog|assets/public/icons" | head
+          B=$("$AAPT" dump badging "$APK")
+          echo "$B" | grep -q "USE_EXACT_ALARM" || { echo "::error::USE_EXACT_ALARM missing"; exit 1; }
+          echo "$B" | grep -q "POST_NOTIFICATIONS" || { echo "::error::POST_NOTIFICATIONS missing"; exit 1; }
+          PKG=$(echo "$B" | grep "^package:" | tr -d "'")
+          SDK=$(echo "$B" | grep -E "^(sdkVersion|targetSdkVersion)" | tr -d "'" | tr '\n' ' ')
+          PERMS=$(echo "$B" | grep "uses-permission" | sed -E "s/.*name='android.permission.([A-Z_]+)'.*/\1/" | tr '\n' ' ')
+          PLUG=$(unzip -p "$APK" assets/capacitor.plugins.json | tr -d '\n ')
+          VER=$(unzip -p "$APK" assets/public/index.html | grep -o "const APP_VERSION = '[^']*';")
+          ICON=$(unzip -l "$APK" | grep -c "ic_stat_mylog" || true)
+          echo "::notice title=APK::$APK $(du -h "$APK" | cut -f1) | $PKG | $SDK"
+          echo "::notice title=Permissions::$PERMS"
+          echo "::notice title=Web::$VER | plugins $PLUG | status icons $ICON"
 
       - uses: actions/upload-artifact@v4
         with:
