@@ -144,6 +144,14 @@ header.top h1{margin:0;font-size:24px;font-weight:700;line-height:1.25;text-wrap
 .bg-sick{background:var(--sick)}.bg-personal{background:var(--personal)}.bg-vacation{background:var(--vac)}.bg-unknown{background:var(--unknown)}
 
 .lv-list{display:flex;flex-direction:column}
+.mchips{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.mchips::-webkit-scrollbar{display:none}
+.mchip{flex:0 0 auto;min-width:58px;min-height:48px;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:4px 8px;cursor:pointer;font-size:13px;line-height:1.2}
+.mchip small{font-family:var(--font-num);font-size:12px;color:var(--muted);font-weight:600}
+.mchip.has small{color:var(--warn)}
+.mchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700}
+.mchip[aria-pressed="true"] small{color:var(--accent-fg)}
+.mchip:disabled{opacity:.35;cursor:default}
 .lv-month{font-size:12px;color:var(--muted);letter-spacing:.06em;padding:14px 4px 6px}
 .lv-row{width:100%;border:0;background:var(--surface);text-align:left;display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;cursor:pointer;min-height:60px}
 .lv-row + .lv-row{border-top:1px solid var(--line)}
@@ -672,15 +680,22 @@ function viewLeave(){
     '<span><i style="box-shadow:inset 0 0 0 1px var(--accent)"></i>วันหยุด</span><span><i style="background:var(--warn);width:6px;height:6px"></i>ขาดเอกสาร</span></div>'+
     '<p class="muted" style="font-size:12px;margin:10px 0 0">แตะวันทำงานเพื่อแจ้งลา แตะวันที่ลาแล้วเพื่อแก้ไข</p></div>';
 
-  const ys = state.leaves.filter(l => Number(l.date.slice(0,4))===year).sort((a,b)=>a.date>b.date?-1:1);
+  const calYear = Number(calMonth.slice(0,4));
+  const monthTotal = k => state.leaves.filter(l => monthKey(l.date)===k && l.type!=='unknown').reduce((a,l)=>a+leaveAmount(l),0);
+  const monthHasUnknown = k => state.leaves.some(l => monthKey(l.date)===k && l.type==='unknown');
+  const chips = Array.from({length:12}, (_,i) => { const k = calYear+'-'+pad(i+1); const tot = monthTotal(k), unk = monthHasUnknown(k);
+    const off = k < startKey || k > year+'-12';
+    return '<button type="button" class="mchip'+(tot||unk?' has':'')+'" data-month="'+k+'" aria-pressed="'+(k===calMonth)+'"'+(off?' disabled':'')+' aria-label="'+fmtMonth(k)+' ลา '+fmtNum(tot)+' วัน">'+
+      TH_M[i]+'<small>'+(tot ? fmtNum(tot)+' วัน' : unk ? 'รอระบุ' : '–')+'</small></button>'; }).join('');
+  const ys = state.leaves.filter(l => monthKey(l.date)===calMonth).sort((a,b)=>a.date<b.date?-1:1);
   let list = '';
   if (!state.loaded.leaves) list = '<div class="all-done">กำลังโหลด…</div>';
-  else if (!ys.length) list = '<div class="card placeholder"><b>ยังไม่มีการลาในปีนี้</b><p>กดปุ่ม + หรือแตะวันในปฏิทินเพื่อแจ้งลา</p></div>';
+  else if (!ys.length) list = '<div class="all-done">ไม่มีการลาใน'+fmtMonth(calMonth)+'</div>';
   else {
     let curM = '';
     ys.forEach(l => {
       const mk = monthKey(l.date);
-      if (mk !== curM) { if (curM) list += '</div>'; curM = mk; list += '<div class="lv-month">'+fmtMonth(mk)+'</div><div class="lv-list card">'; }
+      if (mk !== curM) { if (curM) list += '</div>'; curM = mk; list += '<div class="lv-list card">'; }
       const miss = l.type==='unknown' ? [] : missingDocs(l,hmap,state.leaves);
       const req = requiredDocs(l,hmap,state.leaves);
       const d = parse(l.date);
@@ -705,7 +720,8 @@ function viewLeave(){
     : '<div class="all-done">ยังไม่มีข้อมูลวันหยุด</div>';
 
   return calendar +
-    '<div class="sec-h"><h2>การลาปี '+beYear(year)+'</h2><button type="button" class="link-btn" id="copySummary">'+ICON.copy.replace('<svg','<svg style="vertical-align:-3px;margin-right:4px"')+'คัดลอกสรุปส่ง HR</button></div>'+
+    '<div class="sec-h"><h2>การลา '+fmtMonth(calMonth)+'</h2><button type="button" class="link-btn" id="copySummary">'+ICON.copy.replace('<svg','<svg style="vertical-align:-3px;margin-right:4px"')+'คัดลอกสรุปทั้งปีส่ง HR</button></div>'+
+    '<div class="mchips" id="mchips" role="group" aria-label="เลือกเดือน">'+chips+'</div>'+
     '<div>'+list+'</div>'+
     '<div class="sec-h"><h2>Timesheet</h2><span class="aside">แตะเพื่ออัปเดตสถานะ</span></div>'+
     '<div class="card">'+tsHtml+'</div>'+
@@ -745,6 +761,9 @@ function bindView(){
     openLeave(l || null, btn.dataset.day);
   }));
   v.querySelectorAll('[data-ts]').forEach(btn => btn.addEventListener('click', () => openTimesheet(btn.dataset.ts)));
+  v.querySelectorAll('[data-month]').forEach(b => b.addEventListener('click', () => { calMonth = b.dataset.month; render(); }));
+  const mc = $('#mchips'), ms = mc && mc.querySelector('[aria-pressed="true"]');
+  if (mc && ms) mc.scrollLeft = ms.offsetLeft - mc.clientWidth/2 + ms.clientWidth/2;
   const p = $('#calPrev'), n = $('#calNext');
   if (p) p.addEventListener('click', () => { calMonth = shiftMonth(calMonth,-1); render(); });
   if (n) n.addEventListener('click', () => { calMonth = shiftMonth(calMonth, 1); render(); });
