@@ -674,7 +674,7 @@ function viewLeave(){
   const startKey = (state.settings.startMonth||'2026-03');
   const calendar = '<div class="card cut-tr cal">'+
     '<div class="cal-head"><button type="button" class="icon-btn" id="calPrev" aria-label="เดือนก่อนหน้า"'+(calMonth<=startKey?' disabled':'')+'>'+ICON.left+'</button>'+
-    '<b>'+fmtMonth(calMonth)+'</b><button type="button" class="icon-btn" id="calNext" aria-label="เดือนถัดไป"'+(calMonth>=year+'-12'?' disabled':'')+'>'+ICON.right+'</button></div>'+
+    '<b>'+fmtMonth(calMonth)+'</b><button type="button" class="icon-btn" id="calNext" aria-label="เดือนถัดไป"'+(calMonth>=(year+1)+'-12'?' disabled':'')+'>'+ICON.right+'</button></div>'+
     '<div class="cal-grid">'+cells+'</div>'+
     '<div class="legend"><span><i class="bg-sick"></i>ป่วย</span><span><i class="bg-personal"></i>กิจ</span><span><i class="bg-vacation"></i>พักร้อน</span>'+
     '<span><i style="box-shadow:inset 0 0 0 1px var(--accent)"></i>วันหยุด</span><span><i style="background:var(--warn);width:6px;height:6px"></i>ขาดเอกสาร</span></div>'+
@@ -684,7 +684,7 @@ function viewLeave(){
   const monthTotal = k => state.leaves.filter(l => monthKey(l.date)===k && l.type!=='unknown').reduce((a,l)=>a+leaveAmount(l),0);
   const monthHasUnknown = k => state.leaves.some(l => monthKey(l.date)===k && l.type==='unknown');
   const chips = Array.from({length:12}, (_,i) => { const k = calYear+'-'+pad(i+1); const tot = monthTotal(k), unk = monthHasUnknown(k);
-    const off = k < startKey || k > year+'-12';
+    const off = k < startKey || k > (year+1)+'-12';
     return '<button type="button" class="mchip'+(tot||unk?' has':'')+'" data-month="'+k+'" aria-pressed="'+(k===calMonth)+'"'+(off?' disabled':'')+' aria-label="'+fmtMonth(k)+' ลา '+fmtNum(tot)+' วัน">'+
       TH_M[i]+'<small>'+(tot ? fmtNum(tot)+' วัน' : unk ? 'รอระบุ' : '–')+'</small></button>'; }).join('');
   const ys = state.leaves.filter(l => monthKey(l.date)===calMonth).sort((a,b)=>a.date<b.date?-1:1);
@@ -715,9 +715,9 @@ function viewLeave(){
       '<span class="'+(ts.signed?'ok-t':'no-t')+'">'+(ts.signed?'เซ็นแล้ว':'ยังไม่เซ็น')+'</span><span class="muted">·</span>'+
       '<span class="'+(ts.sent?'ok-t':'no-t')+'">'+(ts.sent?'ส่ง HR แล้ว':'ยังไม่ส่ง')+'</span></span></button>'; }).join('');
 
-  const hols = (state.holidays||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
+  const hols = (state.holidays||[]).filter(h => Number(h.date.slice(0,4))===calYear).sort((a,b)=>a.date<b.date?-1:1);
   const holHtml = hols.length ? hols.map(h => '<div class="hol-row'+(h.date<today?' past':'')+'"><span>'+esc(h.name)+'</span><span class="num">'+fmtDay(h.date)+'</span></div>').join('')
-    : '<div class="all-done">ยังไม่มีข้อมูลวันหยุด</div>';
+    : '<div class="all-done">ยังไม่มีวันหยุดปี '+beYear(calYear)+' แตะ "จัดการ" เพื่อเพิ่ม</div>';
 
   return calendar +
     '<div class="sec-h"><h2>การลา '+fmtMonth(calMonth)+'</h2><button type="button" class="link-btn" id="copySummary">'+ICON.copy.replace('<svg','<svg style="vertical-align:-3px;margin-right:4px"')+'คัดลอกสรุปทั้งปีส่ง HR</button></div>'+
@@ -725,7 +725,7 @@ function viewLeave(){
     '<div>'+list+'</div>'+
     '<div class="sec-h"><h2>Timesheet</h2><span class="aside">แตะเพื่ออัปเดตสถานะ</span></div>'+
     '<div class="card">'+tsHtml+'</div>'+
-    '<div class="sec-h"><h2>วันหยุดบริษัท '+beYear(year)+'</h2><span class="aside">'+hols.filter(h=>h.date>=today).length+' วันที่เหลือ</span></div>'+
+    '<div class="sec-h"><h2>วันหยุดบริษัท '+beYear(calYear)+'</h2><span><span class="aside">'+(calYear===year?hols.filter(h=>h.date>=today).length+' วันที่เหลือ':hols.length+' วัน')+'</span><button type="button" class="link-btn" id="manageHol" style="margin-left:8px">จัดการ</button></span></div>'+
     '<div class="card">'+holHtml+'</div>';
 }
 
@@ -767,6 +767,7 @@ function bindView(){
   const p = $('#calPrev'), n = $('#calNext');
   if (p) p.addEventListener('click', () => { calMonth = shiftMonth(calMonth,-1); render(); });
   if (n) n.addEventListener('click', () => { calMonth = shiftMonth(calMonth, 1); render(); });
+  const mh = $('#manageHol'); if (mh) mh.addEventListener('click', () => openHolidays(beYear(Number(calMonth.slice(0,4)))));
   const ob1 = $('#obSync'), ob2 = $('#obImport');
   if (ob1) ob1.addEventListener('click', openSettings);
   if (ob2) ob2.addEventListener('click', pickImportFile);
@@ -877,6 +878,107 @@ function openTimesheet(key){
     const signed = $('#tsSigned').checked, sent = $('#tsSent').checked;
     try { const r = await commit('timesheets/'+key, 'set', { month:key, signed: signed || sent, sent, updatedAt:new Date().toISOString() }); closeSheet(); toast(r==='saved' ? 'อัปเดต Timesheet แล้ว' : 'สัญญาณไม่ดี บันทึกไว้ในเครื่องแล้ว จะส่งเองเมื่อเน็ตกลับมา'); }
     catch(ex){ $('#tsErr').textContent = writeErrMsg(ex); }
+  });
+}
+
+/* ---------- holiday manager ---------- */
+const HOLIDAY_PRESETS = [
+  { name:'วันขึ้นปีใหม่', md:['01-01'] }, { name:'วันตรุษจีน' }, { name:'วันมาฆบูชา' }, { name:'วันจักรี', md:['04-06'] },
+  { name:'วันสงกรานต์', md:['04-13','04-14','04-15'] }, { name:'วันแรงงานแห่งชาติ', md:['05-01'] }, { name:'วันฉัตรมงคล', md:['05-04'] },
+  { name:'วันพืชมงคล' }, { name:'วันวิสาขบูชา' }, { name:'วันเฉลิมพระชนมพรรษา สมเด็จพระราชินี', md:['06-03'] },
+  { name:'วันอาสาฬหบูชา' }, { name:'วันเข้าพรรษา' }, { name:'วันเฉลิมพระชนมพรรษา ร.10', md:['07-28'] },
+  { name:'วันแม่แห่งชาติ', md:['08-12'] }, { name:'วันนวมินทรมหาราช', md:['10-13'] }, { name:'วันปิยมหาราช', md:['10-23'] },
+  { name:'วันพ่อแห่งชาติ', md:['12-05'] }, { name:'วันรัฐธรรมนูญ', md:['12-10'] }, { name:'วันสิ้นปี', md:['12-31'] }, { name:'วันหยุดพิเศษ' }
+];
+const COMP = 'ชดเชย';
+function splitHolidayName(n){ n = String(n||''); return n.indexOf(COMP) === 0 ? { comp:true, base:n.slice(COMP.length) } : { comp:false, base:n }; }
+function holidayDocsByYear(){ // BE year -> days[] (from current state)
+  const m = {}; state.holidays.forEach(h => { const be = beYear(Number(h.date.slice(0,4))); (m[be] = m[be] || []).push({ date:h.date, name:h.name }); });
+  return m;
+}
+function fixedCopyFrom(prevDays, ceYear){
+  const out = [];
+  prevDays.forEach(h => { const sp = splitHolidayName(h.name); if (sp.comp) return;
+    const p = HOLIDAY_PRESETS.find(x => x.name === sp.base && x.md); const md = h.date.slice(5);
+    if (p && p.md.includes(md)) out.push({ date: ceYear+'-'+md, name: h.name }); });
+  return out;
+}
+let holYearView = null, holEdit = null;
+function openHolidays(beY, editDate){
+  const byYear = holidayDocsByYear();
+  const curBE = beYear(Number(TODAY().slice(0,4)));
+  holYearView = beY || holYearView || curBE; holEdit = editDate || null;
+  const ceY = holYearView - 543;
+  const days = (byYear[holYearView] || []).slice().sort((a,b) => a.date < b.date ? -1 : 1);
+  const prev = byYear[holYearView-1] || [];
+  const editing = holEdit ? days.find(d => d.date === holEdit) : null;
+  const sp = editing ? splitHolidayName(editing.name) : { comp:false, base:'' };
+  const used = [...new Set(state.holidays.map(h => splitHolidayName(h.name).base))].filter(n => n && !HOLIDAY_PRESETS.some(p => p.name === n));
+  const opt = n => '<option value="'+esc(n)+'"'+(sp.base===n?' selected':'')+'>'+esc(n)+'</option>';
+  const isOther = editing && !HOLIDAY_PRESETS.some(p => p.name === sp.base) && !used.includes(sp.base);
+  const rows = days.length ? days.map(d => '<div class="hol-row" style="align-items:center"><span style="min-width:0">'+esc(d.name)+'<br><span class="muted num" style="font-size:13px">'+fmtDay(d.date)+'</span></span>'+
+      '<span class="tool-row" style="gap:4px;flex-wrap:nowrap"><button type="button" class="icon-btn" data-hedit="'+d.date+'" aria-label="แก้ไข '+esc(d.name)+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"></path></svg></button>'+
+      '<button type="button" class="icon-btn" data-hdel="'+d.date+'" aria-label="ลบ '+esc(d.name)+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"></path></svg></button></span></div>').join('')
+    : '<div class="all-done">ยังไม่มีวันหยุดปี '+holYearView+'</div>';
+  const copyBtn = !days.length && prev.length ? '<button type="button" class="btn btn-ghost" id="hCopy" style="width:100%;margin-top:8px">คัดลอกวันหยุดวันเดิมจากปี '+(holYearView-1)+' ('+fixedCopyFrom(prev, ceY).length+' วัน)</button>' : '';
+  openSheet('<h3>วันหยุดบริษัท<button type="button" class="icon-btn" data-close aria-label="ปิด"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></h3>'+
+    '<div class="cal-head"><button type="button" class="icon-btn" id="hPrev" aria-label="ปีก่อนหน้า">'+ICON.left+'</button><b>ปี '+holYearView+' · '+days.length+' วัน</b><button type="button" class="icon-btn" id="hNext" aria-label="ปีถัดไป"'+(holYearView>=curBE+1?' disabled':'')+'>'+ICON.right+'</button></div>'+
+    '<div class="card">'+rows+'</div>'+copyBtn+
+    '<form id="hForm" class="set-sec" novalidate style="margin-top:14px"><h4 style="margin:0 0 10px;font-size:15px">'+(editing?'แก้ไขวันหยุด':'เพิ่มวันหยุด')+'</h4>'+
+    '<div class="field"><label for="hName">ชื่อวันหยุด</label><select class="input" id="hName"><option value="">— เลือก —</option>'+
+      HOLIDAY_PRESETS.map(p => opt(p.name)).join('')+(used.length?'<optgroup label="เคยใช้">'+used.map(opt).join('')+'</optgroup>':'')+
+      '<option value="__other"'+(isOther?' selected':'')+'>อื่นๆ (พิมพ์เอง)</option></select></div>'+
+    '<div class="field" id="hOtherF"'+(isOther?'':' hidden')+'><label for="hOther">ชื่อวันหยุด (พิมพ์เอง)</label><input class="input" id="hOther" maxlength="60" value="'+(isOther?esc(sp.base):'')+'"></div>'+
+    '<label class="check"><input type="checkbox" id="hComp"'+(sp.comp?' checked':'')+'><span>เป็นวันหยุดชดเชย<br><small>ชื่อจะขึ้นต้นด้วย "ชดเชย" เช่น ชดเชยวันพ่อแห่งชาติ</small></span></label>'+
+    '<div class="field"><label for="hDate">วันที่</label><input class="input num" type="date" id="hDate" value="'+(editing?editing.date:'')+'"></div>'+
+    '<p class="err" id="hErr" role="alert"></p><div class="sheet-actions">'+(editing?'<button type="button" class="btn btn-ghost" id="hCancel">ยกเลิกแก้ไข</button>':'<span></span>')+
+    '<button type="submit" class="btn btn-primary">'+(editing?'บันทึก':'เพิ่มวันหยุด')+'</button></div></form>');
+  const save = async (newDays, msg, nextYear) => {
+    newDays.sort((a,b) => a.date < b.date ? -1 : 1);
+    try { await commit('holidays/'+(nextYear||holYearView), 'set', { days:newDays }); toast(msg); openHolidays(nextYear||holYearView); }
+    catch(ex){ const e = $('#hErr'); if (e) e.textContent = writeErrMsg(ex); }
+  };
+  $('#hPrev').addEventListener('click', () => openHolidays(holYearView-1));
+  $('#hNext').addEventListener('click', () => openHolidays(holYearView+1));
+  const cb = $('#hCopy'); if (cb) cb.addEventListener('click', () => save(fixedCopyFrom(prev, ceY), 'คัดลอกวันหยุดแล้ว อย่าลืมเพิ่มวันหยุดตามจันทรคติและวันชดเชย'));
+  const cc = $('#hCancel'); if (cc) cc.addEventListener('click', () => openHolidays(holYearView));
+  document.querySelectorAll('[data-hedit]').forEach(b => b.addEventListener('click', () => openHolidays(holYearView, b.dataset.hedit)));
+  document.querySelectorAll('[data-hdel]').forEach(b => b.addEventListener('click', () => {
+    if (!b.classList.contains('armed')) { b.classList.add('armed'); b.style.color = 'var(--accent-text)'; b.setAttribute('aria-label','แตะอีกครั้งเพื่อลบ'); toast('แตะถังขยะอีกครั้งเพื่อลบ'); return; }
+    save(days.filter(d => d.date !== b.dataset.hdel), 'ลบวันหยุดแล้ว');
+  }));
+  const nameSel = $('#hName');
+  nameSel.addEventListener('change', () => {
+    $('#hOtherF').hidden = nameSel.value !== '__other';
+    const p = HOLIDAY_PRESETS.find(x => x.name === nameSel.value);
+    if (p && p.md && !$('#hComp').checked && !$('#hDate').value) {
+      const free = p.md.map(md => ceY+'-'+md).find(d => !days.some(x => x.date === d));
+      if (free) $('#hDate').value = free;
+    }
+  });
+  $('#hDate').addEventListener('change', () => {
+    if (nameSel.value) return;
+    const md = $('#hDate').value.slice(5); const p = HOLIDAY_PRESETS.find(x => x.md && x.md.includes(md));
+    if (p) nameSel.value = p.name;
+  });
+  $('#hForm').addEventListener('submit', e => {
+    e.preventDefault(); const err = $('#hErr'); err.textContent = '';
+    let base = nameSel.value === '__other' ? $('#hOther').value.trim() : nameSel.value;
+    const date = $('#hDate').value;
+    if (!base) { err.textContent = 'เลือกชื่อวันหยุดก่อน'; return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { err.textContent = 'เลือกวันที่ก่อน'; return; }
+    const name = ($('#hComp').checked ? COMP : '') + base;
+    const targetBE = beYear(Number(date.slice(0,4)));
+    const targetDays = targetBE === holYearView ? days : (byYear[targetBE] || []).slice();
+    const clash = targetDays.find(d => d.date === date && d.date !== holEdit);
+    if (clash) { err.textContent = fmtDay(date)+' เป็น '+clash.name+' อยู่แล้ว แตะแก้ไขที่รายการนั้นแทน'; return; }
+    if (targetBE !== holYearView && holEdit) { // moved to another year
+      const rest = days.filter(d => d.date !== holEdit);
+      commit('holidays/'+holYearView, 'set', { days:rest }).then(() => save(targetDays.concat([{ date, name }]), 'ย้ายวันหยุดไปปี '+targetBE+' แล้ว', targetBE));
+      return;
+    }
+    const nd = targetDays.filter(d => d.date !== holEdit).concat([{ date, name }]);
+    save(nd, holEdit ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่ม '+name+' แล้ว', targetBE);
   });
 }
 
