@@ -1,0 +1,14 @@
+{
+  "appId": "io.github.planbmaker.mylog",
+  "appName": "My Log",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0B0B0C"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_mylog",
+      "iconColor": "#F01E14"
+    }
+  }
+}

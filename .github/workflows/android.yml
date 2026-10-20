@@ -1,0 +1,82 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_B64: ${{ secrets.MYLOG_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install and copy web app into Android project
+        run: |
+          npm ci
+          npm run sync
+
+      - name: Check tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          if [ "v$PKG" != "$GITHUB_REF_NAME" ]; then echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PKG"; exit 1; fi
+
+      - name: Prepare signing key
+        if: env.KEYSTORE_B64 != ''
+        run: echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/mylog.keystore"
+
+      - name: Build signed release APK
+        if: env.KEYSTORE_B64 != ''
+        working-directory: android
+        env:
+          MYLOG_KEYSTORE_FILE: ${{ runner.temp }}/mylog.keystore
+          MYLOG_KEYSTORE_PASSWORD: ${{ secrets.MYLOG_KEYSTORE_PASSWORD }}
+          MYLOG_KEY_ALIAS: ${{ secrets.MYLOG_KEY_ALIAS }}
+          MYLOG_KEY_PASSWORD: ${{ secrets.MYLOG_KEY_PASSWORD }}
+          MYLOG_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/mylog-$(node -p "require('../package.json').version").apk"
+
+      - name: Build debug APK (no signing key yet, compile check only)
+        if: env.KEYSTORE_B64 == ''
+        working-directory: android
+        env:
+          MYLOG_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          echo "::warning::Secret MYLOG_KEYSTORE_BASE64 is not set: building a debug APK only (not for release)."
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/mylog-debug.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mylog-apk
+          path: mylog-*.apk
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v') && env.KEYSTORE_B64 != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" mylog-*.apk \
+            --title "My Log $GITHUB_REF_NAME" \
+            --notes "ดาวน์โหลดไฟล์ .apk ด้านล่างบนมือถือ แล้วเปิดเพื่อติดตั้ง (ติดตั้งทับเวอร์ชันเดิมได้ ข้อมูลไม่หาย)"

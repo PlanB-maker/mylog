@@ -188,6 +188,7 @@ header.top h1{margin:0;font-size:24px;font-weight:700;line-height:1.25;text-wrap
 .pending-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--warn);font-size:13px;margin-top:8px}
 .pending-bar b{color:var(--warn)}
 .tag-pending{font-size:11px;color:var(--warn);border:1px dashed var(--warn);padding:0 6px;margin-left:6px}
+.sheet .btn-ghost{background:var(--surface2);border:1px solid var(--line)}
 .onboard{padding:18px 20px;display:flex;flex-direction:column;gap:10px}
 .onboard b{font-size:17px}
 .onboard p{margin:0;color:var(--muted);font-size:14px}
@@ -433,6 +434,44 @@ function leaveSummaryText(state, year){
   return lines.join('\n');
 }
 function fmtNum(n){ return Number.isInteger(n) ? String(n) : n.toFixed(1); }
+
+function prevWorkday(s, hmap){ let x = addDays(s,-1); while (!isWorkday(x,hmap)) x = addDays(x,-1); return x; }
+function shiftMonthKey(k, n){ let [y,m] = k.split('-').map(Number); m += n; while (m < 1){ m += 12; y--; } while (m > 12){ m -= 12; y++; } return y+'-'+pad(m); }
+const REMINDER_KIND = { prep:1, send:2, export:3 };
+function reminderAt(dateStr, hhmm){ const [h,m] = hhmm.split(':').map(Number); const d = parse(dateStr); d.setHours(h, m, 0, 0); return d; }
+function compactDates(ds){ // ['2026-09-08','2026-09-28','2026-10-01'] -> '8, 28 ก.ย., 1 ต.ค.'
+  const groups = []; ds.slice().sort().forEach(d => { const k = d.slice(0,7); const g = groups[groups.length-1];
+    if (g && g.k === k) g.days.push(Number(d.slice(8))); else groups.push({ k, days:[Number(d.slice(8))] }); });
+  return groups.map(g => g.days.join(', ')+' '+TH_M[Number(g.k.slice(5))-1]).join(', ');
+}
+function computeReminders(st, now, months){
+  months = months || 3;
+  const hmap = holidayMap(st.holidays);
+  const today = iso(now);
+  const keys = monthsFrom(monthKey(today), shiftMonthKey(monthKey(today), months-1));
+  const out = [];
+  const add = (dateStr, hhmm, kind, title, body) => out.push({ id: Number(dateStr.replace(/-/g,''))*10 + REMINDER_KIND[kind], at: reminderAt(dateStr, hhmm), date: dateStr, kind, title, body });
+  keys.forEach(k => {
+    const ts = st.timesheets[k] || {};
+    const due = lastWorkday(k, hmap), prep = prevWorkday(due, hmap);
+    const mname = TH_MF[Number(k.slice(5))-1];
+    if (!ts.signed && !ts.sent)
+      add(prep, '10:00', 'prep', 'เตรียม Timesheet '+mname, 'ขอหัวหน้าเซ็นวันนี้ · ส่ง HR '+(daysBetween(prep, due) === 1 ? 'พรุ่งนี้ ' : '')+fmtDay(due));
+    if (!ts.sent) {
+      const miss = st.leaves.filter(l => l.type !== 'unknown' && l.date <= due && missingDocs(l, hmap, st.leaves).length).sort((a,b) => a.date < b.date ? -1 : 1);
+      const unk = st.leaves.filter(l => l.type === 'unknown' && l.date <= due).length;
+      const parts = ['form','cert','evidence'].map(dk => {
+        const ds = miss.filter(l => missingDocs(l, hmap, st.leaves).includes(dk)).map(l => l.date);
+        return ds.length ? DOCS[dk]+' '+compactDates(ds) : '';
+      }).filter(Boolean);
+      let body = parts.length ? 'แนบ '+parts.join(' · ') : 'ส่ง Timesheet ให้ HR (APNS) วันนี้';
+      if (unk) body += ' · ระบุประเภทลา '+unk+' วัน';
+      add(due, '13:00', 'send', 'วันนี้ส่ง Timesheet '+mname, body);
+    }
+    add(shiftMonthKey(k, 1)+'-01', '20:00', 'export', 'Export Timeline เดือน'+mname, 'Settings มือถือ → Location → Timeline → Export แล้วนำเข้าแอปหรือส่งให้ Claude');
+  });
+  return out.filter(r => r.at > now).sort((a,b) => a.at - b.at);
+}
 /*LOGIC END*/
 
 /* ---------- state & store ---------- */
@@ -637,7 +676,7 @@ function viewHome(){
   const onboard = Object.keys(store.docs).length ? '' :
     '<div class="card cut-2 onboard"><b>เริ่มต้นใช้งาน</b><p>ยังไม่มีข้อมูลในเครื่องนี้ ตั้งค่าซิงค์กับ Google Sheets เพื่อดึงข้อมูล หรือนำเข้าไฟล์สำรอง</p>'+
     '<div class="tool-row"><button type="button" class="btn btn-primary" id="obSync">ตั้งค่าซิงค์</button><button type="button" class="btn btn-ghost" id="obImport">นำเข้าไฟล์</button></div></div>';
-  return onboard + holidayHtml +
+  return updateCardHtml() + onboard + holidayHtml +
     '<div class="sec-h"><h2>ยอดลาคงเหลือ</h2><span class="aside">ปี '+beYear(year)+(b.unknown?' · รอระบุ '+fmtNum(b.unknown)+' วัน':'')+'</span></div>'+
     '<div class="gauges">'+g('sick','var(--sick)')+g('personal','var(--personal)')+g('vacation','var(--vac)')+'</div>'+
     '<div class="sec-h"><h2>ต้องทำ</h2>'+(todos.length?'<span class="aside">'+todos.length+' รายการ</span>':'')+'</div>'+
@@ -739,7 +778,7 @@ function viewSummary(){
 }
 
 function render(){
-  recompute(); updatePendingBar();
+  recompute(); updatePendingBar(); scheduleRemindersSoon();
   const t = TODAY();
   $('#todayLabel').textContent = fmtLong(t);
   const v = $('#view');
@@ -997,8 +1036,11 @@ function openSettings(){
     '<div class="field"><label for="sToken">รหัสลับ</label><input class="input" type="password" id="sToken" autocomplete="off" spellcheck="false" value="'+esc(syncCfg.token)+'"></div>'+
     '<p class="err" id="sErr" role="alert"></p><div class="sheet-actions">'+(syncConfigured()?'<button type="button" class="btn btn-danger" id="sOff">ปิดซิงค์</button>':'<span></span>')+
     '<button type="submit" class="btn btn-primary">บันทึกและทดสอบ</button></div></form>'+
+    notifSectionHtml()+
     '<div class="set-sec"><h4>สำรองข้อมูล</h4><p class="muted" style="font-size:13px;margin:0 0 10px">ไฟล์สำรองเก็บข้อมูลทั้งหมดในเครื่องนี้ นำเข้าแล้วจะรวมกับข้อมูลที่มีอยู่</p>'+
-    '<div class="tool-row"><button type="button" class="btn btn-ghost" id="bExport">ส่งออกไฟล์</button><button type="button" class="btn btn-ghost" id="bImport">นำเข้าไฟล์</button></div></div>');
+    '<div class="tool-row"><button type="button" class="btn btn-ghost" id="bExport">ส่งออกไฟล์</button><button type="button" class="btn btn-ghost" id="bImport">นำเข้าไฟล์</button></div></div>'+
+    '<p class="muted" style="font-size:12px;margin:16px 0 0;text-align:center">My Log '+(isNative ? 'แอป Android เวอร์ชัน '+esc(APP_VERSION) : 'เว็บแอป')+'</p>');
+  bindNotifSection();
   $('#qForm').addEventListener('submit', async e => {
     e.preventDefault();
     const quota = {}; let bad = false;
@@ -1084,8 +1126,106 @@ $('#settingsBtn').addEventListener('click', openSettings);
 $('#flushBtn').addEventListener('click', () => { if (syncConfigured()) sync(true); else openSettings(); });
 window.addEventListener('online', () => sync());
 window.addEventListener('offline', () => { syncState = 'offline'; updateSyncBar(); });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') sync(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { sync(); if (isNative) refreshNotifStatus().then(() => scheduleReminders(true)); } });
 document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+/* ---------- Android app (Capacitor): local reminders + update check ---------- */
+const APP_VERSION = '0.0.0';
+const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const LN = isNative && window.Capacitor.Plugins ? window.Capacitor.Plugins.LocalNotifications : null;
+const TEST_NOTIF_ID = 9999;
+let notifPerm = 'unknown', exactOk = null, lastSchedHash = '', schedTimer = null, lastSchedError = '';
+async function notifInit(){
+  if (!LN) return;
+  try { await LN.createChannel({ id:'reminders', name:'การเตือน', description:'เตือน Timesheet เอกสารลา และ Export Timeline', importance:5, visibility:1, vibration:true }); } catch(e){}
+  await refreshNotifStatus();
+  if (notifPerm === 'prompt' || notifPerm === 'prompt-with-rationale') await askNotifPermission();
+  scheduleReminders(true);
+}
+async function refreshNotifStatus(){
+  if (!LN) return;
+  try { const p = await LN.checkPermissions(); notifPerm = p.display; } catch(e){ notifPerm = 'unknown'; }
+  try { const x = await LN.checkExactNotificationSetting(); exactOk = x.exact_alarm === 'granted'; } catch(e){ exactOk = null; }
+}
+async function askNotifPermission(){
+  if (!LN) return 'denied';
+  try { const p = await LN.requestPermissions(); notifPerm = p.display; } catch(e){}
+  if (notifPerm === 'granted') scheduleReminders(true);
+  return notifPerm;
+}
+function scheduleRemindersSoon(){ if (!LN) return; clearTimeout(schedTimer); schedTimer = setTimeout(() => scheduleReminders(false), 800); }
+async function scheduleReminders(force){
+  if (!LN || notifPerm !== 'granted') return [];
+  const list = computeReminders(state, new Date(), 3);
+  const hash = JSON.stringify(list.map(r => [r.id, +r.at, r.title, r.body]));
+  if (!force && hash === lastSchedHash) return list;
+  try {
+    const pend = await LN.getPending();
+    const ours = ((pend && pend.notifications) || []).filter(n => Number(n.id) !== TEST_NOTIF_ID).map(n => ({ id: Number(n.id) }));
+    if (ours.length) await LN.cancel({ notifications: ours });
+    if (list.length) await LN.schedule({ notifications: list.map(r => ({
+      id: r.id, title: r.title, body: r.body, largeBody: r.body, channelId: 'reminders',
+      smallIcon: 'ic_stat_mylog', iconColor: '#F01E14',
+      schedule: { at: r.at, allowWhileIdle: true }, extra: { kind: r.kind, date: r.date } })) });
+    lastSchedHash = hash; lastSchedError = '';
+  } catch(e){ lastSchedError = String((e && e.message) || e); }
+  return list;
+}
+async function testNotification(){
+  if (!LN) { toast('การแจ้งเตือนใช้ได้ในแอป Android เท่านั้น'); return; }
+  if (notifPerm !== 'granted' && (await askNotifPermission()) !== 'granted') { toast('ยังไม่ได้อนุญาตการแจ้งเตือน'); return; }
+  try {
+    await LN.schedule({ notifications: [{ id: TEST_NOTIF_ID, title: 'My Log · ทดสอบ', body: 'ถ้าเห็นข้อความนี้ แปลว่าแจ้งเตือนใช้ได้แล้ว', channelId: 'reminders',
+      smallIcon: 'ic_stat_mylog', iconColor: '#F01E14', schedule: { at: new Date(Date.now() + 5000), allowWhileIdle: true } }] });
+    toast('จะเด้งใน 5 วินาที กลับไปหน้าจอโฮมรอได้เลย');
+  } catch(e){ toast('ตั้งแจ้งเตือนไม่สำเร็จ: '+((e && e.message) || e)); }
+}
+async function openExactSetting(){ if (!LN) return; try { await LN.changeExactNotificationSetting(); } catch(e){} setTimeout(refreshNotifStatus, 1500); }
+
+let latestRelease = null;
+function cmpVer(a, b){ const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+  for (let i = 0; i < 3; i++){ const d = (pa[i]||0) - (pb[i]||0); if (d) return d > 0 ? 1 : -1; } return 0; }
+async function checkUpdate(){
+  if (!isNative) return;
+  try {
+    const r = await fetch('https://api.github.com/repos/PlanB-maker/mylog/releases/latest', { headers: { Accept: 'application/vnd.github+json' } });
+    if (!r.ok) return;
+    const j = await r.json();
+    const v = String(j.tag_name || '').replace(/^v/, '');
+    const apk = (j.assets || []).find(a => /\.apk$/i.test(a.name));
+    if (apk && cmpVer(v, APP_VERSION) > 0) { latestRelease = { version: v, url: apk.browser_download_url }; render(); }
+  } catch(e){}
+}
+function updateCardHtml(){
+  if (!latestRelease) return '';
+  return '<div class="card cut-2 onboard"><b>มีเวอร์ชันใหม่ '+esc(latestRelease.version)+'</b>'+
+    '<p>ตอนนี้ใช้ '+esc(APP_VERSION)+' แตะดาวน์โหลด แล้วเปิดไฟล์เพื่อติดตั้งทับ ข้อมูลไม่หาย</p>'+
+    '<div class="tool-row"><a class="btn btn-primary" href="'+esc(latestRelease.url)+'" target="_blank" rel="noopener" style="text-decoration:none">ดาวน์โหลดเวอร์ชันใหม่</a></div></div>';
+}
+function fmtReminderTime(d){ return TH_D[d.getDay()]+' '+d.getDate()+' '+TH_M[d.getMonth()]+' '+pad(d.getHours())+':'+pad(d.getMinutes()); }
+function notifSectionHtml(){
+  if (!isNative) return '<div class="set-sec"><h4>แจ้งเตือน</h4><p class="muted" style="font-size:13px;margin:0">การแจ้งเตือนใช้ได้ในแอป Android ของ My Log</p></div>';
+  const upcoming = computeReminders(state, new Date(), 3).slice(0, 5);
+  const permTxt = notifPerm === 'granted' ? '<span class="ok-t">อนุญาตแล้ว</span>' : '<span class="no-t">ยังไม่อนุญาต</span>';
+  const exactTxt = exactOk === null ? '' : ' · เตือนตรงเวลา: '+(exactOk ? '<span class="ok-t">ได้</span>' : '<span class="no-t">ยังไม่ได้</span>');
+  return '<div class="set-sec"><h4>แจ้งเตือน</h4><p class="sync-status">การแจ้งเตือน: '+permTxt+exactTxt+'</p>'+
+    (lastSchedError ? '<p class="sync-status bad">ตั้งเตือนไม่สำเร็จ: '+esc(lastSchedError)+'</p>' : '')+
+    '<div class="tool-row" style="margin-bottom:12px">'+
+      (notifPerm !== 'granted' ? '<button type="button" class="btn btn-primary" id="nAllow">อนุญาตการแจ้งเตือน</button>' : '')+
+      '<button type="button" class="btn btn-ghost" id="nTest">ทดสอบแจ้งเตือน</button>'+
+      (exactOk === false ? '<button type="button" class="btn btn-ghost" id="nExact">ตั้งค่าเตือนตรงเวลา</button>' : '')+
+    '</div>'+
+    '<p class="muted" style="font-size:13px;margin:0 0 6px">เตือนที่ตั้งไว้ถัดไป</p>'+
+    (upcoming.length ? '<div class="card">'+upcoming.map(r => '<div class="hol-row"><span style="min-width:0">'+esc(r.title)+'<br><span class="muted" style="font-size:12px">'+esc(r.body)+'</span></span><span class="num" style="white-space:nowrap">'+fmtReminderTime(r.at)+'</span></div>').join('')+'</div>'
+      : '<div class="all-done">ไม่มีเตือนที่ต้องตั้งใน 3 เดือนข้างหน้า</div>')+
+    '<p class="muted" style="font-size:12px;margin:10px 0 0">POCO / HyperOS: ตั้งค่ามือถือ → แอป → จัดการแอป → My Log → เปิด "เริ่มอัตโนมัติ" และตั้ง "ประหยัดแบตเตอรี่" เป็น "ไม่จำกัด" ไม่งั้นแจ้งเตือนอาจไม่เด้ง</p></div>';
+}
+function bindNotifSection(){
+  const a = $('#nAllow'), t = $('#nTest'), x = $('#nExact');
+  if (a) a.addEventListener('click', async () => { await askNotifPermission(); closeSheet(); openSettings(); });
+  if (t) t.addEventListener('click', testNotification);
+  if (x) x.addEventListener('click', openExactSetting);
+}
 
 /* ---------- boot ---------- */
 function showBanner(msg){ const b = $('#statusBanner'); b.textContent = msg; b.hidden = !msg; }
@@ -1095,8 +1235,9 @@ async function boot(){
   if (!storageOk) showBanner('เครื่องไม่ยอมให้แอปเก็บข้อมูล ข้อมูลที่บันทึกจะหายเมื่อปิดแอป');
   setTab(tab);
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => {});
+  if (!isNative && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => {});
   sync();
+  if (isNative) { notifInit(); checkUpdate(); }
   setInterval(() => { if (document.visibilityState === 'visible') sync(); }, 120000);
 }
 boot();
