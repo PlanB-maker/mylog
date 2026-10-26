@@ -206,6 +206,8 @@ header.top h1{margin:0;font-size:24px;font-weight:700;line-height:1.25;text-wrap
 .split-lbl .sw{width:10px;height:10px;display:inline-block}
 .split-lbl .sw.a{background:var(--accent)} .split-lbl .sw.b{background:var(--track);box-shadow:inset 0 0 0 1px var(--faint)}
 .tl-travel b.num{color:var(--fg);font-weight:600;font-size:15px}
+.tl-travel .c2m{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+.tl-travel .c2m .link-btn{min-height:0;padding:0 2px;font-size:12px}
 .tl-pl{display:flex;align-items:center;background:var(--surface)}
 .tl-pl + .tl-pl{border-top:1px solid var(--line)}
 .tl-pl .nm{flex:1;min-width:0;border:0;background:none;text-align:left;padding:10px 6px 10px 14px;display:flex;flex-direction:column;cursor:pointer;min-height:56px;justify-content:center}
@@ -513,6 +515,14 @@ function computeReminders(st, now, months){
 const MODE_TH = { MOTORCYCLING:'มอเตอร์ไซค์', IN_PASSENGER_VEHICLE:'รถยนต์', IN_VEHICLE:'รถยนต์', WALKING:'เดิน', RUNNING:'วิ่ง', CYCLING:'จักรยาน',
   IN_BUS:'รถเมล์', IN_SUBWAY:'รถไฟฟ้า', IN_TRAIN:'รถไฟ', IN_TRAM:'รถราง', FLYING:'เครื่องบิน', IN_FERRY:'เรือ', SAILING:'เรือ' };
 const modeTh = m => MODE_TH[m] || 'อื่นๆ';
+const CAR_MODES = ['IN_PASSENGER_VEHICLE','IN_VEHICLE'];
+// km by mode, optionally counting what Google called "car" as motorcycle (Google mislabels bikes when a Bluetooth headset is connected)
+function effModes(byMode, carAsMoto){
+  const out = {};
+  Object.entries(byMode||{}).forEach(([k,v]) => { const kk = carAsMoto && CAR_MODES.includes(k) ? 'MOTORCYCLING' : k; out[kk] = Math.round(((out[kk]||0) + v)*10)/10; });
+  return Object.fromEntries(Object.entries(out).sort((a,b) => b[1]-a[1]));
+}
+function carKm(byMode){ return CAR_MODES.reduce((s,k) => s + ((byMode||{})[k]||0), 0); }
 function parseLatLng(s){
   const p = String(s||'').replace(/geo:|°/g,'').split(',').map(x => parseFloat(x));
   return p.length === 2 && isFinite(p[0]) && isFinite(p[1]) ? [p[0], p[1]] : null;
@@ -634,7 +644,7 @@ function monthSummaryText(st, key){
   lines.push('การลา: '+(ls.length ? ls.map(l => fmtShort(l.date)+' '+TYPES[l.type].full+(l.half?' (ครึ่งวัน)':'')).join(', ') : 'ไม่มี'));
   if (m) {
     lines.push('ระยะทาง '+fmtNum(m.km)+' กม. (วันธรรมดา '+fmtNum(m.wkdayKm)+' · เสาร์-อาทิตย์ '+fmtNum(m.wkendKm)+') เดินทาง '+m.travelDays+' วัน '+m.trips+' เที่ยว');
-    const bm = Object.entries(m.byMode||{}).map(([k,v]) => modeTh(k)+' '+fmtNum(v)); if (bm.length) lines.push('แยกตามพาหนะ: '+bm.join(' · ')+' กม.');
+    const bm = Object.entries(effModes(m.byMode, st.settings && st.settings.carAsMoto)).map(([k,v]) => modeTh(k)+' '+fmtNum(v)); if (bm.length) lines.push('แยกตามพาหนะ: '+bm.join(' · ')+' กม.');
     lines.push('อยู่ที่ทำงาน '+(m.work||[]).length+' วัน');
     const top = (m.places||[]).slice(0, 5).map(p => (placeName(st,p) || 'ไม่มีชื่อ ('+p.ll+')')+' '+p.n+' ครั้ง');
     if (top.length) lines.push('ที่ไปบ่อย: '+top.join(', '));
@@ -985,13 +995,16 @@ function viewSummary(){
   const cover = '<p class="muted tl-note">ข้อมูล '+(m.from ? fmtShort(m.from)+'–'+fmtShort(m.to) : 'ไม่ครบวัน')+(m.ok && m.ok.length ? ' · ยืนยันไปทำงานเอง '+m.ok.length+' วัน <button type="button" class="link-btn" id="okReset">ล้าง</button>' : '')+'</p>';
 
   const tot = m.wkdayKm + m.wkendKm || 1, wdPct = Math.round(m.wkdayKm / tot * 100);
-  const modes = Object.entries(m.byMode||{}).map(([mo,km]) => '<span>'+esc(modeTh(mo))+' <b class="num">'+fmtNum(km)+'</b></span>').join('');
+  const c2m = !!state.settings.carAsMoto, car = carKm(m.byMode);
+  const modes = Object.entries(effModes(m.byMode, c2m)).map(([mo,km]) => '<span>'+esc(modeTh(mo))+' <b class="num">'+fmtNum(km)+'</b></span>').join('');
   const travel = '<div class="sec-h"><h2>การเดินทาง</h2><span class="aside">'+m.travelDays+' วัน · '+m.trips+' เที่ยว</span></div>'+
     '<div class="card cut-tr tl-travel">'+
     '<div class="split" role="img" aria-label="วันธรรมดา '+fmtNum(m.wkdayKm)+' กม. เสาร์-อาทิตย์ '+fmtNum(m.wkendKm)+' กม."><i style="width:'+wdPct+'%"></i></div>'+
     '<div class="split-lbl"><span><i class="sw a"></i>วันธรรมดา <b class="num">'+fmtNum(m.wkdayKm)+'</b></span><span><i class="sw b"></i>เสาร์-อาทิตย์ <b class="num">'+fmtNum(m.wkendKm)+'</b></span></div>'+
     (modes ? '<div class="modes">'+modes+'</div>' : '')+
-    '<div class="facts"><span>เวลาเดินทาง <b class="num">'+fmtNum(m.moveH)+'</b> ชม.</span>'+(m.longest ? '<span>ไกลสุด <b class="num">'+fmtNum(m.longest.km)+'</b> กม. '+fmtShort(m.longest.date)+'</span>' : '')+'</div>'+
+    (car >= 1 ? '<div class="c2m">'+(c2m ? 'รวมระยะที่ Google ระบุว่ารถยนต์ '+fmtNum(Math.round(car*10)/10)+' กม. ไว้ในมอเตอร์ไซค์แล้ว'
+      : 'Google ระบุว่ารถยนต์ '+fmtNum(Math.round(car*10)/10)+' กม. ถ้าจริงๆ ขี่มอเตอร์ไซค์ <button type="button" class="link-btn" id="c2mOn">นับเป็นมอเตอร์ไซค์</button>')+'</div>' : '')+
+    '<div class="facts"><span>เวลาเดินทาง <b class="num">'+fmtNum(m.moveH)+'</b> ชม.</span>'+(m.longest ? '<span>ไกลสุด <b class="num">'+fmtNum(m.longest.km)+'</b> กม. '+fmtShort(m.longest.date)+' · '+esc(modeTh(c2m && CAR_MODES.includes(m.longest.mode) ? 'MOTORCYCLING' : m.longest.mode))+'</span>' : '')+'</div>'+
     '<div class="facts"><span>บ้าน <b class="num">'+fmtNum(Math.round(m.hours.home))+'</b> ชม.</span><span>ที่ทำงาน <b class="num">'+fmtNum(Math.round(m.hours.work))+'</b> ชม.</span><span>ที่อื่น <b class="num">'+fmtNum(Math.round(m.hours.other))+'</b> ชม.</span></div></div>';
 
   const pls = (m.places||[]).slice(0, 10);
@@ -1013,6 +1026,7 @@ function bindSummary(){
   on('#sumNext', () => { const ks = summaryKeys(), i = ks.indexOf(sumMonth); if (i < ks.length-1) { sumMonth = ks[i+1]; render(); } });
   on('#copyMonth', () => copyText(monthSummaryText(state, sumMonth)));
   on('#okReset', () => setMonthOk(sumMonth, null));
+  on('#c2mOn', () => setCarAsMoto(true));
   const v = $('#view');
   v.querySelectorAll('[data-absleave]').forEach(b => b.addEventListener('click', () => openLeave(null, b.dataset.absleave)));
   v.querySelectorAll('[data-absok]').forEach(b => b.addEventListener('click', () => setMonthOk(monthKey(b.dataset.absok), Number(b.dataset.absok.slice(8)))));
@@ -1111,6 +1125,12 @@ function openTlSheet(mode){
 function onNotificationTap(kind){
   if (kind === 'export') { setTab('summary'); if (nat()) openTlSheet('start'); }
   else if (kind === 'prep' || kind === 'send') setTab('leave');
+}
+
+async function setCarAsMoto(on){
+  try { await commit('settings/main', 'set', Object.assign({}, state.settings, { carAsMoto: !!on }));
+    toast(on ? 'นับระยะรถยนต์เป็นมอเตอร์ไซค์แล้ว · ปิดได้ในตั้งค่า' : 'แยกรถยนต์ตามที่ Google ระบุ'); }
+  catch(ex){ toast(writeErrMsg(ex)); }
 }
 
 function render(){
@@ -1374,6 +1394,7 @@ function openSettings(){
     '<div class="field"><label for="sToken">รหัสลับ</label><input class="input" type="password" id="sToken" autocomplete="off" spellcheck="false" value="'+esc(syncCfg.token)+'"></div>'+
     '<p class="err" id="sErr" role="alert"></p><div class="sheet-actions">'+(syncConfigured()?'<button type="button" class="btn btn-danger" id="sOff">ปิดซิงค์</button>':'<span></span>')+
     '<button type="submit" class="btn btn-primary">บันทึกและทดสอบ</button></div></form>'+
+    '<div class="set-sec"><h4>การเดินทาง (Timeline)</h4><label class="check"><input type="checkbox" id="c2m"'+(state.settings.carAsMoto?' checked':'')+'><span>พาหนะหลักเป็นมอเตอร์ไซค์<br><small>นับระยะที่ Google ระบุว่า "รถยนต์" เป็นมอเตอร์ไซค์ Google มักเดาผิดเมื่อมือถือต่อ Bluetooth</small></span></label></div>'+
     notifSectionHtml()+
     '<div class="set-sec"><h4>สำรองข้อมูล</h4><p class="muted" style="font-size:13px;margin:0 0 10px">ไฟล์สำรองเก็บข้อมูลทั้งหมดในเครื่องนี้ นำเข้าแล้วจะรวมกับข้อมูลที่มีอยู่</p>'+
     '<div class="tool-row"><button type="button" class="btn btn-ghost" id="bExport">ส่งออกไฟล์</button><button type="button" class="btn btn-ghost" id="bImport">นำเข้าไฟล์</button></div></div>'+
@@ -1384,7 +1405,7 @@ function openSettings(){
     const quota = {}; let bad = false;
     ['sick','personal','vacation'].forEach(t => { const v = Number($('#q_'+t).value); if (!(v>=0 && v<=365)) bad = true; quota[t] = v; });
     if (bad) { $('#qErr').textContent = 'ใส่จำนวนวันระหว่าง 0–365'; return; }
-    try { await commit('settings/main', 'set', { quota, startMonth: state.settings.startMonth || '2026-03' }); closeSheet(); toast('บันทึกโควตาแล้ว'); }
+    try { await commit('settings/main', 'set', Object.assign({}, state.settings, { quota, startMonth: state.settings.startMonth || '2026-03' })); closeSheet(); toast('บันทึกโควตาแล้ว'); }
     catch(ex){ $('#qErr').textContent = writeErrMsg(ex); }
   });
   $('#sForm').addEventListener('submit', async e => {
@@ -1408,6 +1429,7 @@ function openSettings(){
     if (!off.classList.contains('armed')) { off.classList.add('armed'); off.textContent = 'แตะอีกครั้งเพื่อปิด'; return; }
     syncCfg = { url:'', token:'', since:null, lastSyncAt:null, lastError:'' }; saveSync(); closeSheet(); render(); toast('ปิดซิงค์แล้ว ข้อมูลยังอยู่ในเครื่อง');
   });
+  $('#c2m').addEventListener('change', e => setCarAsMoto(e.target.checked));
   $('#bExport').addEventListener('click', exportData);
   $('#bImport').addEventListener('click', pickImportFile);
 }
