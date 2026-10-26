@@ -21,6 +21,13 @@ import java.io.OutputStream;
 public class MyLogNativePlugin extends Plugin {
     private static final String IMPORT_FILE = "timeline-import.json";
 
+    /** WebView visibility events are unreliable when returning from another app, so tell JS directly. */
+    @Override
+    protected void handleOnResume() {
+        super.handleOnResume();
+        notifyListeners("appResumed", new JSObject());
+    }
+
     @PluginMethod
     public void openLocationSettings(PluginCall call) {
         try {

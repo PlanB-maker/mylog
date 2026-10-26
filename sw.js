@@ -1,5 +1,5 @@
 /* My Log service worker: app works offline; data never touches this cache. */
-const VERSION = 'mylog-v7';
+const VERSION = 'mylog-v8';
 const FONT_CACHE = 'mylog-fonts';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png'];
 
