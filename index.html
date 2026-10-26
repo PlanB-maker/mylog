@@ -969,7 +969,7 @@ function viewSummary(){
   const lastTo = Object.values(months).map(x => x && x.to).filter(Boolean).sort().pop();
   const imp = '<div class="card cut-2 tl-imp"><div class="tx"><b>Timeline</b><span>'+(lastTo ? 'ข้อมูลถึง '+fmtLong(lastTo) : 'ยังไม่ได้นำเข้า')+'</span></div>'+
     '<button type="button" class="btn btn-primary" id="tlImport">'+(nat() ? 'อัปเดต Timeline' : 'นำเข้า Timeline')+'</button></div>'+
-    '<p class="muted tl-how">'+(nat() ? 'กดปุ่มแล้วเลื่อนลงแตะ <b>บริการตำแหน่ง</b> → <b>ไทม์ไลน์</b> → <b>ส่งออกข้อมูลไทม์ไลน์</b> → บันทึก แล้วกลับมาที่แอป จะให้เลือกไฟล์ต่อเอง · <button type="button" class="link-btn" id="tlPick">มีไฟล์อยู่แล้ว</button>'
+    '<p class="muted tl-how">'+(nat() ? 'กดปุ่มแล้วเลื่อนลงแตะ <b>บริการตำแหน่ง</b> → <b>ไทม์ไลน์</b> → เลือกบัญชี → <b>ส่งออกข้อมูลไทม์ไลน์</b> → บันทึก แล้วกลับมาที่แอป จะให้เลือกไฟล์ต่อเอง · <button type="button" class="link-btn" id="tlPick">มีไฟล์อยู่แล้ว</button>'
       : 'ส่งออกไฟล์จากมือถือ: ตั้งค่า → ตำแหน่ง → ไทม์ไลน์ → ส่งออกข้อมูลไทม์ไลน์ แล้วกดปุ่มด้านบนเลือกไฟล์นั้น')+'</p>';
   const i = keys.indexOf(k);
   const nav = '<div class="card cal-head tl-nav"><button type="button" class="icon-btn" id="sumPrev" aria-label="เดือนก่อนหน้า"'+(i<=0?' disabled':'')+'>'+ICON.left+'</button>'+
@@ -1116,7 +1116,7 @@ function openTlSheet(mode){
   const ret = mode === 'return';
   openSheet('<h3>'+(ret ? 'เลือกไฟล์ที่เพิ่งส่งออก' : 'อัปเดต Timeline')+x+'</h3>'+
     (ret ? '<p class="muted" style="font-size:14px;margin:0 0 16px">แตะไฟล์บนสุดในหมวด <b>ล่าสุด</b> แอปจะอ่านไฟล์ในเครื่องนี้และเก็บไว้แค่ผลสรุป</p>'
-      : '<ol class="tl-steps"><li>กดปุ่มด้านล่าง แอปจะเปิดหน้าตำแหน่งของเครื่อง</li><li>เลื่อนลงล่างสุด แตะ <b>บริการตำแหน่ง</b> → <b>ไทม์ไลน์</b> → <b>ส่งออกข้อมูลไทม์ไลน์</b> → บันทึก</li><li>กลับมาที่แอป แล้วแตะไฟล์บนสุด</li></ol>')+
+      : '<ol class="tl-steps"><li>กดปุ่มด้านล่าง แอปจะเปิดหน้าตำแหน่งของเครื่อง</li><li>เลื่อนลงล่างสุด แตะ <b>บริการตำแหน่ง</b> → <b>ไทม์ไลน์</b> → เลือกบัญชี → <b>ส่งออกข้อมูลไทม์ไลน์</b> → บันทึก</li><li>กลับมาที่แอป แล้วแตะไฟล์บนสุด</li></ol>')+
     '<div class="sheet-actions">'+(ret ? '<button type="button" class="btn btn-ghost" id="tlAgain">เปิดหน้าตำแหน่งอีกครั้ง</button><button type="button" class="btn btn-primary" id="tlPick2">เลือกไฟล์</button>'
       : '<button type="button" class="btn btn-ghost" id="tlPick2">มีไฟล์อยู่แล้ว</button><button type="button" class="btn btn-primary" id="tlGo">เปิดหน้าตำแหน่ง</button>')+'</div>');
   const on = (sel, fn) => { const e = $(sel); if (e) e.addEventListener('click', fn); };

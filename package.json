@@ -1,6 +1,6 @@
 {
   "name": "mylog",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "private": true,
   "description": "My Log — personal leave / timesheet tracker (PWA + Android app)",
   "scripts": {
