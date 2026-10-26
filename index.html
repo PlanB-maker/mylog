@@ -180,6 +180,37 @@ header.top h1{margin:0;font-size:24px;font-weight:700;line-height:1.25;text-wrap
 .btn-danger{background:none;color:var(--accent-text);border:1px solid var(--accent-text)}
 .btn-danger.armed{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 
+.tl-imp{padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tl-imp .tx{display:flex;flex-direction:column;min-width:0}
+.tl-imp .tx b{font-size:16px}
+.tl-imp .tx span{font-size:12px;color:var(--muted)}
+.tl-how{font-size:12px;margin:-6px 4px 0}
+.tl-nav{padding:4px}
+.tl-note{font-size:12px;margin:0 4px}
+.tl-list{display:flex;flex-direction:column}
+.tl-abs{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--surface);border:0;width:100%;text-align:left;min-height:60px;flex-wrap:wrap}
+.tl-abs + .tl-abs{border-top:1px solid var(--line)}
+.tl-abs .tx{display:flex;flex-direction:column;flex:1;min-width:150px}
+.tl-abs .tx b{font-size:14px}
+.tl-abs .tx span{font-size:12px;color:var(--warn)}
+.tl-abs .acts{display:flex;gap:6px}
+.tl-abs .acts .btn{min-height:40px;padding:8px 12px;font-size:13px;background:var(--surface2)}
+.tl-abs.warn{cursor:pointer}
+.tl-travel{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.tl-travel .split{height:8px;background:var(--track);display:flex}
+.tl-travel .split i{display:block;height:100%;background:var(--accent)}
+.split-lbl,.tl-travel .modes,.tl-travel .facts{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)}
+.split-lbl span{display:inline-flex;align-items:center;gap:6px}
+.split-lbl .sw{width:10px;height:10px;display:inline-block}
+.split-lbl .sw.a{background:var(--accent)} .split-lbl .sw.b{background:var(--track);box-shadow:inset 0 0 0 1px var(--faint)}
+.tl-travel b.num{color:var(--fg);font-weight:600;font-size:15px}
+.tl-pl{display:flex;align-items:center;background:var(--surface)}
+.tl-pl + .tl-pl{border-top:1px solid var(--line)}
+.tl-pl .nm{flex:1;min-width:0;border:0;background:none;text-align:left;padding:10px 6px 10px 14px;display:flex;flex-direction:column;cursor:pointer;min-height:56px;justify-content:center}
+.tl-pl .nm b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl-pl .nm b.unnamed{color:var(--faint);font-weight:500}
+.tl-pl .nm span{font-size:12px;color:var(--muted)}
+.tl-pl a.icon-btn{color:var(--accent-text);flex:0 0 auto}
 .placeholder{padding:28px 20px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
 .placeholder b{font-size:17px}
 .placeholder p{margin:0;color:var(--muted);font-size:14px;max-width:32ch}
@@ -403,6 +434,10 @@ function buildTodos(state, today){
       title: summarizeDates(unknowns.map(l=>l.date))+' ยังไม่มีใบลา',
       sub: 'ขาดงานจาก Timeline · แตะเพื่อระบุประเภทลา' });
   }
+  const abs = allAbsences(state);
+  if (abs.length) todos.push({ kind:'absent', key: monthKey(abs[0]),
+    title: (abs.length === 1 ? fmtShort(abs[0]) : summarizeDates(abs))+' ไม่พบว่าไปทำงาน',
+    sub: 'จาก Timeline · แตะเพื่อแจ้งลาหรือยืนยันว่าไปทำงาน' });
   state.leaves.filter(l => l.type!=='unknown').sort((a,b)=>a.date<b.date?-1:1).forEach(l => {
     const miss = missingDocs(l, hmap, state.leaves);
     if (miss.length) todos.push({ kind:'docs', id:l.id,
@@ -472,11 +507,144 @@ function computeReminders(st, now, months){
   });
   return out.filter(r => r.at > now).sort((a,b) => a.at - b.at);
 }
+/* ---- Timeline (phase 2) ---- */
+const MODE_TH = { MOTORCYCLING:'มอเตอร์ไซค์', IN_PASSENGER_VEHICLE:'รถยนต์', IN_VEHICLE:'รถยนต์', WALKING:'เดิน', RUNNING:'วิ่ง', CYCLING:'จักรยาน',
+  IN_BUS:'รถเมล์', IN_SUBWAY:'รถไฟฟ้า', IN_TRAIN:'รถไฟ', IN_TRAM:'รถราง', FLYING:'เครื่องบิน', IN_FERRY:'เรือ', SAILING:'เรือ' };
+const modeTh = m => MODE_TH[m] || 'อื่นๆ';
+function parseLatLng(s){
+  const p = String(s||'').replace(/geo:|°/g,'').split(',').map(x => parseFloat(x));
+  return p.length === 2 && isFinite(p[0]) && isFinite(p[1]) ? [p[0], p[1]] : null;
+}
+function geoDist(a, b){
+  const r = x => x*Math.PI/180, R = 6371000;
+  const dLa = r(b[0]-a[0]), dLo = r(b[1]-a[1]);
+  const h = Math.sin(dLa/2)**2 + Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dLo/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+// Pull one top-level value out of a big JSON text without parsing the rest (rawSignals is ~90% of the file)
+function extractJsonValue(text, key){
+  const k = text.indexOf('"'+key+'"'); if (k < 0) return undefined;
+  let i = text.indexOf(':', k + key.length + 2); if (i < 0) return undefined;
+  i++; while (/\s/.test(text[i])) i++;
+  const open = text[i], close = open === '[' ? ']' : open === '{' ? '}' : null;
+  if (!close) return undefined;
+  let depth = 0, inStr = false;
+  for (let j = i; j < text.length; j++){
+    const c = text.charCodeAt(j);
+    if (inStr) { if (c === 92) j++; else if (c === 34) inStr = false; continue; }
+    if (c === 34) inStr = true;
+    else if (c === 91 || c === 123) depth++;
+    else if (c === 93 || c === 125) { depth--; if (depth === 0) return JSON.parse(text.slice(i, j+1)); }
+  }
+  throw new Error('truncated');
+}
+function readTimelineText(text){
+  const segs = extractJsonValue(text, 'semanticSegments');
+  if (!Array.isArray(segs)) return null;
+  let profile = null; try { profile = extractJsonValue(text, 'userLocationProfile') || null; } catch(e){}
+  return { semanticSegments: segs, userLocationProfile: profile };
+}
+const hhmm = s => Number(String(s).slice(11,13))*60 + Number(String(s).slice(14,16));
+function analyzeTimeline(tl){
+  const segs = (tl && tl.semanticSegments || []).filter(s => s && s.startTime && s.endTime && (s.visit || s.activity || s.timelinePath));
+  if (!segs.length) return null;
+  const freq = (tl.userLocationProfile && tl.userLocationProfile.frequentPlaces) || [];
+  const anchor = lab => { const f = freq.find(p => p.label === lab); return f ? parseLatLng(f.placeLocation) : null; };
+  const HOME = anchor('HOME'), WORK = anchor('WORK');
+  let first = null, last = null;
+  segs.forEach(s => { if (!first || s.startTime < first) first = s.startTime; if (!last || s.endTime > last) last = s.endTime; });
+  // a day counts as covered only when the data spans it (starts by 08:00 / ends after 18:00)
+  const from = hhmm(first) <= 8*60 ? first.slice(0,10) : addDays(first.slice(0,10), 1);
+  const to = hhmm(last) >= 18*60 ? last.slice(0,10) : addDays(last.slice(0,10), -1);
+  const months = {};
+  const M = k => months[k] || (months[k] = { km:0, wkdayKm:0, wkendKm:0, trips:0, moveMin:0, byMode:{}, travel:new Set(), work:new Set(), data:new Set(),
+    hours:{ home:0, work:0, other:0 }, pl:{}, longest:null });
+  const dayRange = (a, b) => { const out = []; let x = a; while (x <= b && out.length < 40) { out.push(x); x = addDays(x, 1); } return out; };
+  segs.forEach(s => {
+    const a = s.startTime.slice(0,10), b = s.endTime.slice(0,10);
+    const mins = Math.max(0, (Date.parse(s.endTime) - Date.parse(s.startTime)) / 60000);
+    dayRange(a, b).forEach(d => M(monthKey(d)).data.add(Number(d.slice(8))));
+    const m = M(monthKey(a));
+    if (s.activity) {
+      const km = (Number(s.activity.distanceMeters) || 0) / 1000;
+      const mode = (s.activity.topCandidate && s.activity.topCandidate.type) || 'UNKNOWN';
+      m.km += km; m.trips++; m.moveMin += mins; m.travel.add(Number(a.slice(8)));
+      if (isWeekend(a)) m.wkendKm += km; else m.wkdayKm += km;
+      m.byMode[mode] = (m.byMode[mode] || 0) + km;
+      if (!m.longest || km > m.longest.km) m.longest = { km, date:a, mode };
+    } else if (s.visit) {
+      const top = s.visit.topCandidate || {}, ll = parseLatLng(top.placeLocation && (top.placeLocation.latLng || top.placeLocation));
+      const st = String(top.semanticType || '');
+      const kind = /WORK/.test(st) || (WORK && ll && geoDist(ll, WORK) < 200) ? 'work'
+        : /HOME/.test(st) || (HOME && ll && geoDist(ll, HOME) < 150) ? 'home' : 'other';
+      m.hours[kind] += mins / 60;
+      if (kind === 'work') dayRange(a, b).forEach(d => M(monthKey(d)).work.add(Number(d.slice(8))));
+      else if (kind === 'other' && top.placeId) {
+        const p = m.pl[top.placeId] || (m.pl[top.placeId] = { id:top.placeId, ll: ll ? ll[0].toFixed(6)+','+ll[1].toFixed(6) : '', n:0, min:0, last:a });
+        p.n++; p.min += mins; if (a > p.last) p.last = a;
+      }
+    }
+  });
+  const r1 = x => Math.round(x*10)/10, sortN = set => [...set].sort((x,y) => x-y);
+  const out = {};
+  Object.keys(months).sort().forEach(k => {
+    const m = months[k], ms = k+'-01', me = k+'-'+pad(new Date(Number(k.slice(0,4)), Number(k.slice(5)), 0).getDate());
+    const f = from > ms ? from : ms, t = to < me ? to : me;
+    const byMode = {}; Object.entries(m.byMode).sort((x,y) => y[1]-x[1]).forEach(([mo,km]) => { if (km >= 0.05) byMode[mo] = r1(km); });
+    out[k] = { v:1, from: f <= t ? f : null, to: f <= t ? t : null,
+      km: r1(m.km), wkdayKm: r1(m.wkdayKm), wkendKm: r1(m.wkendKm), trips: m.trips, moveH: r1(m.moveMin/60), byMode,
+      travelDays: m.travel.size, hours: { home:r1(m.hours.home), work:r1(m.hours.work), other:r1(m.hours.other) },
+      work: sortN(m.work), data: sortN(m.data),
+      places: Object.values(m.pl).sort((x,y) => y.n-x.n || y.min-x.min).slice(0, 15).map(p => ({ id:p.id, ll:p.ll, n:p.n, h:r1(p.min/60), last:p.last })),
+      placeCount: Object.keys(m.pl).length,
+      longest: m.longest ? { km:r1(m.longest.km), date:m.longest.date, mode:m.longest.mode } : null };
+  });
+  return { from, to, months: out };
+}
+// merge a fresh analysis into what is stored: keep user confirmations, never shrink coverage
+function mergeTimelineMonth(old, fresh){
+  if (old && old.from && fresh.from && old.from < fresh.from && old.to >= fresh.to) return null;
+  return Object.assign({}, fresh, { ok: (old && old.ok) || [] });
+}
+function timelineCheck(m, key, hmap, leaves){
+  const res = { absent:[], noData:[], leaveAtWork:[] };
+  if (!m || !m.from || !m.to) return res;
+  const byDate = new Map(); leaves.forEach(l => byDate.set(l.date, l));
+  const work = new Set(m.work||[]), data = new Set(m.data||[]), ok = new Set(m.ok||[]);
+  for (let d = m.from; d <= m.to; d = addDays(d, 1)) {
+    if (!isWorkday(d, hmap)) continue;
+    const n = Number(d.slice(8)), l = byDate.get(d);
+    if (l) { if (!l.half && l.type !== 'unknown' && work.has(n)) res.leaveAtWork.push(d); continue; }
+    if (work.has(n) || ok.has(n)) continue;
+    (data.has(n) ? res.absent : res.noData).push(d);
+  }
+  return res;
+}
+function allAbsences(st){
+  const hmap = holidayMap(st.holidays), start = (st.settings && st.settings.startMonth) || '2026-03', out = [];
+  Object.keys(st.months || {}).sort().forEach(k => { if (k >= start) timelineCheck(st.months[k], k, hmap, st.leaves).absent.forEach(d => out.push(d)); });
+  return out;
+}
+function placeName(st, p){ const x = st.places && st.places[p.id]; return x && x.name ? x.name : ''; }
+function monthSummaryText(st, key){
+  const m = (st.months||{})[key], ls = st.leaves.filter(l => monthKey(l.date) === key).sort((a,b) => a.date < b.date ? -1 : 1);
+  const lines = ['สรุปเดือน'+fmtMonth(key)];
+  lines.push('การลา: '+(ls.length ? ls.map(l => fmtShort(l.date)+' '+TYPES[l.type].full+(l.half?' (ครึ่งวัน)':'')).join(', ') : 'ไม่มี'));
+  if (m) {
+    lines.push('ระยะทาง '+fmtNum(m.km)+' กม. (วันธรรมดา '+fmtNum(m.wkdayKm)+' · เสาร์-อาทิตย์ '+fmtNum(m.wkendKm)+') เดินทาง '+m.travelDays+' วัน '+m.trips+' เที่ยว');
+    const bm = Object.entries(m.byMode||{}).map(([k,v]) => modeTh(k)+' '+fmtNum(v)); if (bm.length) lines.push('แยกตามพาหนะ: '+bm.join(' · ')+' กม.');
+    lines.push('อยู่ที่ทำงาน '+(m.work||[]).length+' วัน');
+    const top = (m.places||[]).slice(0, 5).map(p => (placeName(st,p) || 'ไม่มีชื่อ ('+p.ll+')')+' '+p.n+' ครั้ง');
+    if (top.length) lines.push('ที่ไปบ่อย: '+top.join(', '));
+    if (m.from) lines.push('ข้อมูล Timeline '+fmtShort(m.from)+'–'+fmtShort(m.to));
+  }
+  return lines.join('\n');
+}
 /*LOGIC END*/
 
 /* ---------- state & store ---------- */
 const SETTINGS_DEFAULT = () => ({ quota:{...QUOTA_DEFAULT}, startMonth:'2026-03' });
-const state = { leaves:[], holidays:[], timesheets:{}, settings:SETTINGS_DEFAULT(), loaded:{leaves:true,holidays:true,ts:true,settings:true} };
+const state = { leaves:[], holidays:[], timesheets:{}, months:{}, places:{}, settings:SETTINGS_DEFAULT(), loaded:{leaves:true,holidays:true,ts:true,settings:true} };
 
 /* ---------- local store (this phone) ---------- */
 const STORE_KEY = 'mylog.store.v1', SYNC_KEY = 'mylog.sync.v1';
@@ -502,15 +670,18 @@ async function commit(path, op, data){
   return 'saved';
 }
 function recompute(){
-  const leaves = [], ts = {}, hol = []; let settings = SETTINGS_DEFAULT();
+  const leaves = [], ts = {}, hol = [], months = {}, places = {}; let settings = SETTINGS_DEFAULT();
   Object.entries(store.docs).forEach(([p, d]) => {
     if (!d || d.deleted || !d.data) return;
     const [c, id] = p.split('/');
     if (c === 'leaves') { if (d.data.date && TYPES[d.data.type]) leaves.push({ id, ...d.data }); }
     else if (c === 'timesheets') ts[id] = d.data;
     else if (c === 'holidays') hol.push(...(d.data.days || []));
+    else if (c === 'months') months[id] = d.data;
+    else if (c === 'places') places[id] = d.data;
     else if (p === 'settings/main') settings = Object.assign(SETTINGS_DEFAULT(), d.data);
   });
+  state.months = months; state.places = places;
   state.leaves = leaves; state.timesheets = ts; state.holidays = hol; state.settings = settings;
 }
 
@@ -644,6 +815,7 @@ const ICON = {
   check:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--vac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>',
   left:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>',
   right:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>',
+  pin:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg>',
   copy:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="1"></rect><path d="M5 15V4a1 1 0 0 1 1-1h11"></path></svg>'
 };
 
@@ -672,6 +844,7 @@ function viewHome(){
       '<span class="tx"><b>'+esc(t.title)+'</b><span>'+esc(t.sub)+'</span></span>'+ICON.chev+'</button>').join('')
     : '<div class="all-done">'+ICON.check+'ไม่มีอะไรค้าง</div>';
   const cur = monthKey(today);
+  const tlm = (state.months||{})[cur];
   const monthLeave = state.leaves.filter(l => monthKey(l.date)===cur).reduce((s,l)=>s+leaveAmount(l),0);
   const onboard = Object.keys(store.docs).length ? '' :
     '<div class="card cut-2 onboard"><b>เริ่มต้นใช้งาน</b><p>ยังไม่มีข้อมูลในเครื่องนี้ ตั้งค่าซิงค์กับ Google Sheets เพื่อดึงข้อมูล หรือนำเข้าไฟล์สำรอง</p>'+
@@ -684,7 +857,8 @@ function viewHome(){
     '<div class="sec-h"><h2>เดือนนี้ · '+TH_M[Number(cur.slice(5))-1]+'</h2></div>'+
     '<div class="card cut-br month-strip">'+
       '<div><span class="k">วันลา</span><span class="v">'+fmtNum(monthLeave)+'<small> วัน</small></span></div>'+
-      '<div><span class="k">ระยะทาง</span><span class="v na">—</span><span class="note">เฟส 2</span></div>'+
+      (tlm ? '<div><span class="k">ระยะทาง</span><span class="v">'+fmtNum(Math.round(tlm.km))+'<small> กม.</small></span><span class="note">ถึง '+fmtShort(tlm.to||today)+'</span></div>'
+        : '<div><span class="k">ระยะทาง</span><span class="v na">—</span><span class="note">นำเข้า Timeline</span></div>')+
       '<div><span class="k">ค่าน้ำมัน</span><span class="v na">—</span><span class="note">เฟส 3</span></div>'+
     '</div>';
 }
@@ -772,9 +946,117 @@ function viewCar(){
   return '<div class="card cut-2 placeholder"><b>รถ · มาในเฟส 3</b><p>บันทึกเติมน้ำมันแบบเร็ว คำนวณ กม./ลิตร และเตือนรอบดูแล ADV160</p>'+
     '<ul><li>เติมน้ำมัน: ยอดเงิน + ลิตร</li><li>รอบน้ำมันเครื่อง เฟืองท้าย ยาง</li><li>เตือนต่อประกัน ภาษี พ.ร.บ.</li></ul></div>';
 }
+/* ---------- summary tab (Timeline) ---------- */
+let sumMonth = null;
+const mapsUrl = p => 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.ll)+(p.id ? '&query_place_id='+encodeURIComponent(p.id) : '');
+function summaryKeys(){ return monthsFrom(state.settings.startMonth || '2026-03', monthKey(TODAY())); }
 function viewSummary(){
-  return '<div class="card cut-2 placeholder"><b>สรุปรายเดือน · มาในเฟส 2</b><p>นำเข้าไฟล์ Timeline ทุกสิ้นเดือน แล้วรวมการลา ระยะทาง และสถานที่ไว้หน้าเดียว</p>'+
-    '<ul><li>หาวันขาดงานที่ยังไม่มีใบลาให้อัตโนมัติ</li><li>ระยะทาง วันธรรมดา / เสาร์-อาทิตย์</li><li>สถานที่ที่ไปบ่อย พร้อมชื่อ</li></ul></div>';
+  const today = TODAY(), cur = monthKey(today), months = state.months || {}, keys = summaryKeys();
+  if (!sumMonth || !keys.includes(sumMonth)) sumMonth = months[cur] ? cur : (Object.keys(months).filter(k => keys.includes(k)).sort().pop() || cur);
+  const k = sumMonth, m = months[k], hmap = holidayMap(state.holidays);
+  const lastTo = Object.values(months).map(x => x && x.to).filter(Boolean).sort().pop();
+  const imp = '<div class="card cut-2 tl-imp"><div class="tx"><b>Timeline</b><span>'+(lastTo ? 'ข้อมูลถึง '+fmtLong(lastTo) : 'ยังไม่ได้นำเข้า')+'</span></div>'+
+    '<button type="button" class="btn btn-primary" id="tlImport">นำเข้า Timeline</button></div>'+
+    (lastTo ? '' : '<p class="muted tl-how">ส่งออกไฟล์จากมือถือ: ตั้งค่า → ตำแหน่ง → ไทม์ไลน์ → ส่งออกข้อมูลไทม์ไลน์ แล้วกดปุ่มด้านบนเลือกไฟล์นั้น ไฟล์ถูกอ่านในเครื่องนี้เท่านั้น เก็บไว้แค่ผลสรุป</p>');
+  const i = keys.indexOf(k);
+  const nav = '<div class="card cal-head tl-nav"><button type="button" class="icon-btn" id="sumPrev" aria-label="เดือนก่อนหน้า"'+(i<=0?' disabled':'')+'>'+ICON.left+'</button>'+
+    '<b>'+fmtMonth(k)+'</b><button type="button" class="icon-btn" id="sumNext" aria-label="เดือนถัดไป"'+(i>=keys.length-1?' disabled':'')+'>'+ICON.right+'</button></div>';
+  const ls = state.leaves.filter(l => monthKey(l.date) === k);
+  const leaveDays = ls.reduce((s,l) => s + leaveAmount(l), 0);
+  const strip = '<div class="card cut-br month-strip">'+
+    '<div><span class="k">วันลา</span><span class="v">'+fmtNum(leaveDays)+'<small> วัน</small></span></div>'+
+    '<div><span class="k">อยู่ที่ทำงาน</span>'+(m ? '<span class="v">'+(m.work||[]).length+'<small> วัน</small></span>' : '<span class="v na">—</span>')+'</div>'+
+    '<div><span class="k">ระยะทาง</span>'+(m ? '<span class="v">'+fmtNum(Math.round(m.km))+'<small> กม.</small></span>' : '<span class="v na">—</span>')+'</div></div>';
+  if (!m) return imp + nav + strip + '<div class="all-done">ยังไม่มีข้อมูล Timeline ของ'+fmtMonth(k)+'</div>';
+
+  const chk = timelineCheck(m, k, hmap, state.leaves);
+  let check = '';
+  if (chk.absent.length || chk.leaveAtWork.length) {
+    check = '<div class="sec-h"><h2>ต้องตรวจ</h2><span class="aside">'+(chk.absent.length+chk.leaveAtWork.length)+' วัน</span></div><div class="card tl-list">'+
+      chk.absent.map(d => '<div class="tl-abs"><span class="tx"><b>'+fmtDay(d)+'</b><span>ไม่พบว่าไปที่ทำงาน และยังไม่มีใบลา</span></span>'+
+        '<span class="acts"><button type="button" class="btn btn-ghost" data-absleave="'+d+'">แจ้งลา</button><button type="button" class="btn btn-ghost" data-absok="'+d+'">ไปทำงาน</button></span></div>').join('')+
+      chk.leaveAtWork.map(d => '<button type="button" class="tl-abs warn" data-leaveday="'+d+'"><span class="tx"><b>'+fmtDay(d)+'</b><span>ลงลาเต็มวันไว้ แต่ Timeline พบว่าไปที่ทำงาน</span></span>'+ICON.chev+'</button>').join('')+
+      '</div>';
+  }
+  const note = chk.noData.length ? '<p class="muted tl-note">ไม่มีข้อมูลตำแหน่ง '+chk.noData.length+' วันทำงาน ('+compactDates(chk.noData)+')</p>' : '';
+  const cover = '<p class="muted tl-note">ข้อมูล '+(m.from ? fmtShort(m.from)+'–'+fmtShort(m.to) : 'ไม่ครบวัน')+(m.ok && m.ok.length ? ' · ยืนยันไปทำงานเอง '+m.ok.length+' วัน <button type="button" class="link-btn" id="okReset">ล้าง</button>' : '')+'</p>';
+
+  const tot = m.wkdayKm + m.wkendKm || 1, wdPct = Math.round(m.wkdayKm / tot * 100);
+  const modes = Object.entries(m.byMode||{}).map(([mo,km]) => '<span>'+esc(modeTh(mo))+' <b class="num">'+fmtNum(km)+'</b></span>').join('');
+  const travel = '<div class="sec-h"><h2>การเดินทาง</h2><span class="aside">'+m.travelDays+' วัน · '+m.trips+' เที่ยว</span></div>'+
+    '<div class="card cut-tr tl-travel">'+
+    '<div class="split" role="img" aria-label="วันธรรมดา '+fmtNum(m.wkdayKm)+' กม. เสาร์-อาทิตย์ '+fmtNum(m.wkendKm)+' กม."><i style="width:'+wdPct+'%"></i></div>'+
+    '<div class="split-lbl"><span><i class="sw a"></i>วันธรรมดา <b class="num">'+fmtNum(m.wkdayKm)+'</b></span><span><i class="sw b"></i>เสาร์-อาทิตย์ <b class="num">'+fmtNum(m.wkendKm)+'</b></span></div>'+
+    (modes ? '<div class="modes">'+modes+'</div>' : '')+
+    '<div class="facts"><span>เวลาเดินทาง <b class="num">'+fmtNum(m.moveH)+'</b> ชม.</span>'+(m.longest ? '<span>ไกลสุด <b class="num">'+fmtNum(m.longest.km)+'</b> กม. '+fmtShort(m.longest.date)+'</span>' : '')+'</div>'+
+    '<div class="facts"><span>บ้าน <b class="num">'+fmtNum(Math.round(m.hours.home))+'</b> ชม.</span><span>ที่ทำงาน <b class="num">'+fmtNum(Math.round(m.hours.work))+'</b> ชม.</span><span>ที่อื่น <b class="num">'+fmtNum(Math.round(m.hours.other))+'</b> ชม.</span></div></div>';
+
+  const pls = (m.places||[]).slice(0, 10);
+  const places = '<div class="sec-h"><h2>สถานที่ที่ไปบ่อย</h2><span class="aside">'+(m.placeCount||pls.length)+' แห่ง</span></div>'+
+    (pls.length ? '<div class="card tl-list">'+pls.map((p,j) => { const nm = placeName(state, p);
+      return '<div class="tl-pl"><button type="button" class="nm" data-place="'+j+'"><b'+(nm?'':' class="unnamed"')+'>'+esc(nm || 'ยังไม่มีชื่อ · แตะเพื่อตั้งชื่อ')+'</b>'+
+        '<span>'+p.n+' ครั้ง · '+fmtNum(p.h)+' ชม. · ล่าสุด '+fmtShort(p.last)+'</span></button>'+
+        (p.ll ? '<a class="icon-btn" href="'+esc(mapsUrl(p))+'" target="_blank" rel="noopener" aria-label="เปิดใน Google Maps">'+ICON.pin+'</a>' : '')+'</div>'; }).join('')+'</div>'
+      : '<div class="all-done">ไม่มีสถานที่อื่นนอกจากบ้านและที่ทำงาน</div>');
+
+  return imp + nav + strip + check + note + travel + places + cover +
+    '<div class="tool-row" style="justify-content:center"><button type="button" class="link-btn" id="copyMonth">'+ICON.copy.replace('<svg','<svg style="vertical-align:-3px;margin-right:4px"')+'คัดลอกสรุปเดือนนี้</button></div>';
+}
+function bindSummary(){
+  const on = (sel, fn) => { const e = $(sel); if (e) e.addEventListener('click', fn); };
+  on('#tlImport', pickTimelineFile);
+  on('#sumPrev', () => { const ks = summaryKeys(), i = ks.indexOf(sumMonth); if (i > 0) { sumMonth = ks[i-1]; render(); } });
+  on('#sumNext', () => { const ks = summaryKeys(), i = ks.indexOf(sumMonth); if (i < ks.length-1) { sumMonth = ks[i+1]; render(); } });
+  on('#copyMonth', () => copyText(monthSummaryText(state, sumMonth)));
+  on('#okReset', () => setMonthOk(sumMonth, null));
+  const v = $('#view');
+  v.querySelectorAll('[data-absleave]').forEach(b => b.addEventListener('click', () => openLeave(null, b.dataset.absleave)));
+  v.querySelectorAll('[data-absok]').forEach(b => b.addEventListener('click', () => setMonthOk(monthKey(b.dataset.absok), Number(b.dataset.absok.slice(8)))));
+  v.querySelectorAll('[data-leaveday]').forEach(b => b.addEventListener('click', () => openLeave(state.leaves.find(l => l.date === b.dataset.leaveday))));
+  v.querySelectorAll('[data-place]').forEach(b => b.addEventListener('click', () => { const m = (state.months||{})[sumMonth]; if (m) openPlace(m.places[Number(b.dataset.place)]); }));
+}
+async function setMonthOk(k, day){
+  const m = (state.months||{})[k]; if (!m) return;
+  const ok = day == null ? [] : [...new Set([...(m.ok||[]), day])].sort((a,b) => a-b);
+  try { await commit('months/'+k, 'set', Object.assign({}, m, { ok })); toast(day == null ? 'ล้างการยืนยันแล้ว' : 'บันทึกว่าไปทำงาน '+fmtShort(k+'-'+pad(day))); }
+  catch(ex){ toast(writeErrMsg(ex)); }
+}
+function openPlace(p){
+  if (!p) return;
+  const cur = placeName(state, p);
+  openSheet('<h3>ตั้งชื่อสถานที่<button type="button" class="icon-btn" data-close aria-label="ปิด"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></h3>'+
+    '<form id="plForm"><p class="muted" style="font-size:13px;margin:0 0 12px">ไป '+p.n+' ครั้ง · ล่าสุด '+fmtLong(p.last)+'</p>'+
+    (p.ll ? '<p style="margin:0 0 14px"><a class="link-btn" href="'+esc(mapsUrl(p))+'" target="_blank" rel="noopener">เปิดใน Google Maps เพื่อดูว่าที่ไหน</a></p>' : '')+
+    '<div class="field"><label for="plName">ชื่อ</label><input class="input" id="plName" maxlength="60" autocomplete="off" value="'+esc(cur)+'" placeholder="เช่น ร้านกาแฟ, บ้านแม่, ลูกค้า ABC"></div>'+
+    '<p class="err" id="plErr" role="alert"></p><div class="sheet-actions">'+(cur ? '<button type="button" class="btn btn-danger" id="plDel">ลบชื่อ</button>' : '<span></span>')+
+    '<button type="submit" class="btn btn-primary">บันทึก</button></div></form>');
+  $('#plForm').addEventListener('submit', async e => {
+    e.preventDefault(); const name = $('#plName').value.trim();
+    if (!name) { $('#plErr').textContent = 'ใส่ชื่อสถานที่'; return; }
+    try { await commit('places/'+p.id, 'set', { name, ll:p.ll }); closeSheet(); toast('บันทึกชื่อแล้ว'); } catch(ex){ $('#plErr').textContent = writeErrMsg(ex); }
+  });
+  const del = $('#plDel');
+  if (del) del.addEventListener('click', async () => { try { await commit('places/'+p.id, 'delete'); closeSheet(); toast('ลบชื่อแล้ว'); } catch(ex){ $('#plErr').textContent = writeErrMsg(ex); } });
+}
+function pickTimelineFile(){
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.addEventListener('change', () => { if (inp.files && inp.files[0]) importTimelineFile(inp.files[0]); });
+  inp.click();
+}
+async function importTimelineFile(file){
+  const btn = $('#tlImport'); if (btn) { btn.disabled = true; btn.textContent = 'กำลังอ่านไฟล์…'; }
+  await new Promise(r => setTimeout(r, 30));
+  let res = null;
+  try { const tl = readTimelineText(await file.text()); res = tl && analyzeTimeline(tl); } catch(e){ res = null; }
+  if (btn) { btn.disabled = false; btn.textContent = 'นำเข้า Timeline'; }
+  if (!res) { toast('ไฟล์นี้ไม่ใช่ Timeline ที่ส่งออกจากมือถือ'); return; }
+  let n = 0;
+  Object.entries(res.months).forEach(([k, fresh]) => {
+    const old = (state.months||{})[k], doc = mergeTimelineMonth(old, fresh);
+    if (doc) { putDoc('months/'+k, doc, false); n++; }
+  });
+  sumMonth = null; render(); scheduleSync(1500);
+  toast(n ? 'นำเข้า '+n+' เดือน ข้อมูล '+fmtShort(res.from)+'–'+fmtShort(res.to) : 'ไม่มีข้อมูลใหม่กว่าที่มีอยู่');
 }
 
 function render(){
@@ -791,6 +1073,7 @@ function bindView(){
   v.querySelectorAll('[data-todo]').forEach(btn => btn.addEventListener('click', () => {
     const todos = buildTodos(state, TODAY()); const t = todos[Number(btn.dataset.todo)]; if (!t) return;
     if (t.kind==='timesheet') openTimesheet(t.key);
+    else if (t.kind==='absent') { if (typeof sumMonth !== 'undefined') sumMonth = t.key; setTab('summary'); }
     else if (t.kind==='unknown') openLeave(state.leaves.find(l => l.id===t.ids[0]));
     else openLeave(state.leaves.find(l => l.id===t.id));
   }));
@@ -810,6 +1093,7 @@ function bindView(){
   const ob1 = $('#obSync'), ob2 = $('#obImport');
   if (ob1) ob1.addEventListener('click', openSettings);
   if (ob2) ob2.addEventListener('click', pickImportFile);
+  if (tab === 'summary') bindSummary();
   const c = $('#copySummary');
   if (c) c.addEventListener('click', () => copyText(leaveSummaryText(state, Number(TODAY().slice(0,4)))));
 }
