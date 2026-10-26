@@ -3,7 +3,6 @@ name: Android APK
 on:
   push:
     branches: [main]
-    tags: ['v*']
   workflow_dispatch:
 
 permissions:
@@ -31,12 +30,6 @@ jobs:
         run: |
           npm ci
           npm run sync
-
-      - name: Check tag matches package.json version
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          PKG=$(node -p "require('./package.json').version")
-          if [ "v$PKG" != "$GITHUB_REF_NAME" ]; then echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PKG"; exit 1; fi
 
       - name: Prepare signing key
         if: env.KEYSTORE_B64 != ''
@@ -89,11 +82,17 @@ jobs:
           name: mylog-apk
           path: mylog-*.apk
 
-      - name: Publish GitHub release
-        if: startsWith(github.ref, 'refs/tags/v') && env.KEYSTORE_B64 != ''
+      - name: Publish GitHub release (once per package.json version)
+        if: github.ref == 'refs/heads/main' && env.KEYSTORE_B64 != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" mylog-*.apk \
-            --title "My Log $GITHUB_REF_NAME" \
-            --notes "ดาวน์โหลดไฟล์ .apk ด้านล่างบนมือถือ แล้วเปิดเพื่อติดตั้ง (ติดตั้งทับเวอร์ชันเดิมได้ ข้อมูลไม่หาย)"
+          VER=v$(node -p "require('./package.json').version")
+          if gh release view "$VER" >/dev/null 2>&1; then
+            echo "::notice title=Release::$VER already exists, skipped (bump package.json version to publish a new APK)"
+          else
+            gh release create "$VER" mylog-*.apk --target "$GITHUB_SHA" \
+              --title "My Log $VER" \
+              --notes "ดาวน์โหลดไฟล์ .apk ด้านล่างบนมือถือ แล้วเปิดเพื่อติดตั้ง (ติดตั้งทับเวอร์ชันเดิมได้ ข้อมูลไม่หาย)"
+            echo "::notice title=Release::published $VER"
+          fi
