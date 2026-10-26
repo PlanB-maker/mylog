@@ -186,6 +186,8 @@ header.top h1{margin:0;font-size:24px;font-weight:700;line-height:1.25;text-wrap
 .tl-imp .tx span{font-size:12px;color:var(--muted)}
 .tl-how{font-size:12px;margin:-6px 4px 0}
 .tl-nav{padding:4px}
+.tl-how .link-btn{min-height:0;padding:0 2px;font-size:12px}
+.tl-steps{margin:0 0 16px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .tl-note{font-size:12px;margin:0 4px}
 .tl-list{display:flex;flex-direction:column}
 .tl-abs{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--surface);border:0;width:100%;text-align:left;min-height:60px;flex-wrap:wrap}
@@ -503,7 +505,7 @@ function computeReminders(st, now, months){
       if (unk) body += ' · ระบุประเภทลา '+unk+' วัน';
       add(due, '13:00', 'send', 'วันนี้ส่ง Timesheet '+mname, body);
     }
-    add(shiftMonthKey(k, 1)+'-01', '20:00', 'export', 'Export Timeline เดือน'+mname, 'Settings มือถือ → Location → Timeline → Export แล้วนำเข้าแอปหรือส่งให้ Claude');
+    add(shiftMonthKey(k, 1)+'-01', '20:00', 'export', 'Export Timeline เดือน'+mname, 'แตะเพื่ออัปเดต Timeline ในแอป (ส่งออกแล้วเลือกไฟล์)');
   });
   return out.filter(r => r.at > now).sort((a,b) => a.at - b.at);
 }
@@ -956,8 +958,9 @@ function viewSummary(){
   const k = sumMonth, m = months[k], hmap = holidayMap(state.holidays);
   const lastTo = Object.values(months).map(x => x && x.to).filter(Boolean).sort().pop();
   const imp = '<div class="card cut-2 tl-imp"><div class="tx"><b>Timeline</b><span>'+(lastTo ? 'ข้อมูลถึง '+fmtLong(lastTo) : 'ยังไม่ได้นำเข้า')+'</span></div>'+
-    '<button type="button" class="btn btn-primary" id="tlImport">นำเข้า Timeline</button></div>'+
-    (lastTo ? '' : '<p class="muted tl-how">ส่งออกไฟล์จากมือถือ: ตั้งค่า → ตำแหน่ง → ไทม์ไลน์ → ส่งออกข้อมูลไทม์ไลน์ แล้วกดปุ่มด้านบนเลือกไฟล์นั้น ไฟล์ถูกอ่านในเครื่องนี้เท่านั้น เก็บไว้แค่ผลสรุป</p>');
+    '<button type="button" class="btn btn-primary" id="tlImport">'+(nat() ? 'อัปเดต Timeline' : 'นำเข้า Timeline')+'</button></div>'+
+    '<p class="muted tl-how">'+(nat() ? 'กดปุ่มแล้วแตะ <b>ไทม์ไลน์</b> → <b>ส่งออกข้อมูลไทม์ไลน์</b> → บันทึก แล้วกลับมาที่แอป จะให้เลือกไฟล์ต่อเอง · <button type="button" class="link-btn" id="tlPick">มีไฟล์อยู่แล้ว</button>'
+      : 'ส่งออกไฟล์จากมือถือ: ตั้งค่า → ตำแหน่ง → ไทม์ไลน์ → ส่งออกข้อมูลไทม์ไลน์ แล้วกดปุ่มด้านบนเลือกไฟล์นั้น')+'</p>';
   const i = keys.indexOf(k);
   const nav = '<div class="card cal-head tl-nav"><button type="button" class="icon-btn" id="sumPrev" aria-label="เดือนก่อนหน้า"'+(i<=0?' disabled':'')+'>'+ICON.left+'</button>'+
     '<b>'+fmtMonth(k)+'</b><button type="button" class="icon-btn" id="sumNext" aria-label="เดือนถัดไป"'+(i>=keys.length-1?' disabled':'')+'>'+ICON.right+'</button></div>';
@@ -1004,7 +1007,8 @@ function viewSummary(){
 }
 function bindSummary(){
   const on = (sel, fn) => { const e = $(sel); if (e) e.addEventListener('click', fn); };
-  on('#tlImport', pickTimelineFile);
+  on('#tlImport', () => nat() ? startTimelineUpdate() : pickTimelineFile());
+  on('#tlPick', pickTimelineNative);
   on('#sumPrev', () => { const ks = summaryKeys(), i = ks.indexOf(sumMonth); if (i > 0) { sumMonth = ks[i-1]; render(); } });
   on('#sumNext', () => { const ks = summaryKeys(), i = ks.indexOf(sumMonth); if (i < ks.length-1) { sumMonth = ks[i+1]; render(); } });
   on('#copyMonth', () => copyText(monthSummaryText(state, sumMonth)));
@@ -1043,12 +1047,14 @@ function pickTimelineFile(){
   inp.addEventListener('change', () => { if (inp.files && inp.files[0]) importTimelineFile(inp.files[0]); });
   inp.click();
 }
-async function importTimelineFile(file){
-  const btn = $('#tlImport'); if (btn) { btn.disabled = true; btn.textContent = 'กำลังอ่านไฟล์…'; }
+function importTimelineFile(file){ return importTimeline(() => file.text()); }
+async function importTimeline(getText){
+  const btn = $('#tlImport'), label = btn && btn.textContent; if (btn) { btn.disabled = true; btn.textContent = 'กำลังอ่านไฟล์…'; }
+  toast('กำลังอ่านไฟล์…');
   await new Promise(r => setTimeout(r, 30));
   let res = null;
-  try { const tl = readTimelineText(await file.text()); res = tl && analyzeTimeline(tl); } catch(e){ res = null; }
-  if (btn) { btn.disabled = false; btn.textContent = 'นำเข้า Timeline'; }
+  try { const tl = readTimelineText(await getText()); res = tl && analyzeTimeline(tl); } catch(e){ res = null; }
+  if (btn) { btn.disabled = false; btn.textContent = label; }
   if (!res) { toast('ไฟล์นี้ไม่ใช่ Timeline ที่ส่งออกจากมือถือ'); return; }
   let n = 0;
   Object.entries(res.months).forEach(([k, fresh]) => {
@@ -1057,6 +1063,54 @@ async function importTimelineFile(file){
   });
   sumMonth = null; render(); scheduleSync(1500);
   toast(n ? 'นำเข้า '+n+' เดือน ข้อมูล '+fmtShort(res.from)+'–'+fmtShort(res.to) : 'ไม่มีข้อมูลใหม่กว่าที่มีอยู่');
+}
+
+/* ---------- one-button Timeline update (Android) ---------- */
+function nat(){ const C = window.Capacitor; return (C && C.isNativePlatform && C.isNativePlatform() && C.Plugins && C.Plugins.MyLogNative) || null; }
+const TLFLOW_KEY = 'mylog.tlflow';
+function tlFlowPending(){ try { const t = Number(localStorage.getItem(TLFLOW_KEY)); return !!t && Date.now() - t < 30*60000; } catch(e){ return false; } }
+function setTlFlow(on){ try { if (on) localStorage.setItem(TLFLOW_KEY, String(Date.now())); else localStorage.removeItem(TLFLOW_KEY); } catch(e){} }
+async function startTimelineUpdate(){
+  closeSheet();
+  if (!nat()) { pickTimelineFile(); return; }
+  setTlFlow(true);
+  try { await nat().openLocationSettings(); }
+  catch(e){ setTlFlow(false); toast('เปิดหน้าตั้งค่าไม่ได้ ไปที่ ตั้งค่า → ตำแหน่ง → ไทม์ไลน์ เอง'); }
+}
+function onAppReturnTl(){
+  if (!tlFlowPending()) return;
+  setTlFlow(false);
+  if (tab !== 'summary') setTab('summary');
+  openTlSheet('return');
+  pickTimelineNative();
+}
+async function pickTimelineNative(){
+  if (!nat()) { pickTimelineFile(); return; }
+  let r;
+  try { r = await nat().pickJsonFile(); } catch(e){ toast('เปิดตัวเลือกไฟล์ไม่ได้'); return; }
+  if (!r || r.cancelled || !r.path) return;
+  closeSheet();
+  await importTimeline(async () => {
+    const res = await fetch(window.Capacitor.convertFileSrc(r.path));
+    if (!res.ok) throw new Error('read');
+    return res.text();
+  });
+  try { await nat().clearImportCache(); } catch(e){}
+}
+function openTlSheet(mode){
+  const x = '<button type="button" class="icon-btn" data-close aria-label="ปิด"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>';
+  const ret = mode === 'return';
+  openSheet('<h3>'+(ret ? 'เลือกไฟล์ที่เพิ่งส่งออก' : 'อัปเดต Timeline')+x+'</h3>'+
+    (ret ? '<p class="muted" style="font-size:14px;margin:0 0 16px">แตะไฟล์บนสุดในหมวด <b>ล่าสุด</b> แอปจะอ่านไฟล์ในเครื่องนี้และเก็บไว้แค่ผลสรุป</p>'
+      : '<ol class="tl-steps"><li>กดปุ่มด้านล่าง แอปจะเปิดหน้าตำแหน่งของเครื่อง</li><li>แตะ <b>ไทม์ไลน์</b> → <b>ส่งออกข้อมูลไทม์ไลน์</b> → บันทึก</li><li>กลับมาที่แอป แล้วแตะไฟล์บนสุด</li></ol>')+
+    '<div class="sheet-actions">'+(ret ? '<button type="button" class="btn btn-ghost" id="tlAgain">เปิดหน้าตำแหน่งอีกครั้ง</button><button type="button" class="btn btn-primary" id="tlPick2">เลือกไฟล์</button>'
+      : '<button type="button" class="btn btn-ghost" id="tlPick2">มีไฟล์อยู่แล้ว</button><button type="button" class="btn btn-primary" id="tlGo">เปิดหน้าตำแหน่ง</button>')+'</div>');
+  const on = (sel, fn) => { const e = $(sel); if (e) e.addEventListener('click', fn); };
+  on('#tlAgain', startTimelineUpdate); on('#tlGo', startTimelineUpdate); on('#tlPick2', pickTimelineNative);
+}
+function onNotificationTap(kind){
+  if (kind === 'export') { setTab('summary'); if (nat()) openTlSheet('start'); }
+  else if (kind === 'prep' || kind === 'send') setTab('leave');
 }
 
 function render(){
@@ -1410,7 +1464,9 @@ $('#settingsBtn').addEventListener('click', openSettings);
 $('#flushBtn').addEventListener('click', () => { if (syncConfigured()) sync(true); else openSettings(); });
 window.addEventListener('online', () => sync());
 window.addEventListener('offline', () => { syncState = 'offline'; updateSyncBar(); });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { sync(); if (isNative) refreshNotifStatus().then(() => scheduleReminders(true)); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { sync(); onAppReturnTl(); if (isNative) refreshNotifStatus().then(() => scheduleReminders(true)); } });
+document.addEventListener('resume', () => onAppReturnTl());
+window.addEventListener('focus', () => onAppReturnTl());
 document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 
 /* ---------- Android app (Capacitor): local reminders + update check ---------- */
@@ -1421,6 +1477,7 @@ const TEST_NOTIF_ID = 9999;
 let notifPerm = 'unknown', exactOk = null, lastSchedHash = '', schedTimer = null, lastSchedError = '';
 async function notifInit(){
   if (!LN) return;
+  try { LN.addListener('localNotificationActionPerformed', a => { const ex = a && a.notification && a.notification.extra; onNotificationTap(ex && ex.kind); }); } catch(e){}
   try { await LN.createChannel({ id:'reminders', name:'การเตือน', description:'เตือน Timesheet เอกสารลา และ Export Timeline', importance:5, visibility:1, vibration:true }); } catch(e){}
   await refreshNotifStatus();
   if (notifPerm === 'prompt' || notifPerm === 'prompt-with-rationale') await askNotifPermission();
