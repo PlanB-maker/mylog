@@ -111,7 +111,7 @@ function rebuildViews_(rows) {
       x.type || '', Number(x.amount || 0).toFixed(2), Number(x.fee || 0).toFixed(2), x.ref || '', x.app === 'make' ? 'MAKE' : 'K PLUS']));
 }
 
-const EXP_CAT_TH_ = { food: 'อาหาร/เครื่องดื่ม', shop: 'ช้อปปิ้ง', travel: 'เดินทาง/น้ำมัน', bills: 'บิล/เน็ต/โทรศัพท์', people: 'โอนให้คน', other: 'อื่นๆ', self: 'โอนเข้าบัญชีตัวเอง', ignore: 'ไม่นับ' };
+const EXP_CAT_TH_ = { food: 'อาหาร/เครื่องดื่ม', shop: 'ช้อปปิ้ง/ของใช้', travel: 'เดินทาง/น้ำมัน', bills: 'เน็ต/สาธารณูปโภค', people: 'โอนเงิน/บุคคล', other: 'อื่นๆ', self: 'โอนเข้าบัญชีตัวเอง', ignore: 'ไม่นับ' };
 
 function nameParts_(n) {
   const key = s => String(s || '').toLowerCase().replace(/[\s.,()\-]/g, '').replace(/[\u0e31\u0e34-\u0e3a\u0e47-\u0e4e]/g, '');

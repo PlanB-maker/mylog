@@ -325,6 +325,72 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
 .exp-prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
 .exp-rule{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
 .exp-rule span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* expenses tab: card layout, colours from the app theme (dark / light) */
+.tv{--t-card:var(--surface);--t-ink:var(--fg);--t-muted:var(--muted);--t-blue:var(--accent-text);--t-line:var(--line);--t-shadow:0 4px 16px rgba(0,0,0,.12);
+  color:var(--t-ink);display:flex;flex-direction:column;gap:14px}
+.tv-card{background:var(--t-card);border-radius:24px;box-shadow:var(--t-shadow);border:1px solid var(--line)}
+.tv-status{display:flex;align-items:center;gap:10px;padding:10px 12px;font-size:14px}
+.tv-auto{border:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:color-mix(in srgb,var(--vac) 18%,transparent);color:var(--vac);font-weight:700;border-radius:999px;padding:8px 12px;white-space:nowrap;min-height:38px}
+.tv-auto.off{cursor:default;background:var(--surface2);color:var(--t-muted)}
+.tv-auto:disabled{opacity:.7}
+.tv-status .when{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.tv-status .when svg{flex:0 0 auto;color:var(--t-muted)}
+.tv-link{border:0;background:none;color:var(--t-blue);font-weight:700;cursor:pointer;white-space:nowrap;padding:6px 2px;min-height:36px;font-size:14px}
+.tv-head{padding:16px}
+.tv-head .top{display:flex;align-items:center;gap:12px}
+.tv-head .logo{width:52px;height:52px;border-radius:16px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:var(--t-blue);background:var(--surface2);border:1px solid var(--line)}
+.tv-head .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.tv-head .tt b{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tv-head .tt span{font-size:13px;color:var(--t-muted)}
+.tv-fold{border:0;cursor:pointer;width:54px;height:54px;border-radius:50%;flex:0 0 auto;background:var(--surface2);color:var(--t-blue);font-weight:800;font-size:14px}
+.tv-hero{position:relative;margin-top:14px;border-radius:20px;overflow:hidden;min-height:172px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,var(--surface2)) 0%,var(--surface2) 70%);border:1px solid var(--line)}
+.tv-hero .art{position:absolute;left:4px;top:10px;width:62%;height:auto}
+.tv-hero .done{position:absolute;right:10px;top:10px;background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:800;font-size:13px;box-shadow:var(--t-shadow);color:var(--t-ink)}
+.tv-hero .done::first-letter{color:var(--vac)}
+.tv-hero .done.wait{color:var(--t-muted)}
+.tv-hero .mini{position:absolute;right:10px;bottom:10px;left:42%;background:var(--surface);border-radius:16px;padding:8px 12px;box-shadow:var(--t-shadow);font-size:13px}
+.tv-hero .mini div{display:flex;justify-content:space-between;gap:8px;padding:4px 0}
+.tv-hero .mini div + div{border-top:1px solid var(--t-line)}
+.tv-hero .mini span{color:var(--t-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tv-hero .mini b{font-family:var(--font-num);font-weight:800;white-space:nowrap}
+.tv-hero .mini b.g{color:var(--vac)}
+.tv-head .cap{margin:10px 0 0;text-align:center;font-size:12px;color:var(--t-muted)}
+.tv-month{display:flex;align-items:center;justify-content:center;gap:10px}
+.tv-month b{font-size:15px;min-width:150px;text-align:center}
+.tv-month button{border:0;cursor:pointer;width:40px;height:40px;border-radius:50%;background:var(--t-card);color:var(--t-blue);font-size:22px;font-weight:700;box-shadow:var(--t-shadow)}
+.tv-month button:disabled{opacity:.35;cursor:default}
+.tv-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 4px 0}
+.tv-h h2{margin:0;font-size:17px;font-weight:800;display:flex;align-items:center;gap:7px;white-space:nowrap;min-width:0}
+.tv-h h2 span{overflow:hidden;text-overflow:ellipsis}
+.tv-h h2 svg{color:var(--t-blue);flex:0 0 auto}
+.tv-aside{font-size:13px;color:var(--t-muted)}
+.tv-cmp{border:1px solid var(--line);background:var(--surface);color:var(--t-blue);border-radius:999px;padding:8px 11px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.tv-sum{padding:16px 12px;display:flex;gap:10px;align-items:center}
+.tv-donut{flex:0 0 auto;position:relative;width:118px;height:118px}
+.tv-donut svg{width:100%;height:100%}
+.tv-donut .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.tv-donut .c small{font-size:12px;color:var(--t-muted)}
+.tv-donut .c b{font-family:var(--font-num);font-size:21px;font-weight:800}
+.tv-legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.tv-legend .lg{display:flex;align-items:center;gap:5px}
+.tv-legend .lg > i{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+.tv-legend .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.tv-legend b{font-family:var(--font-num);font-weight:800;white-space:nowrap;font-size:13px}
+.tv-legend em{font-style:normal;color:var(--t-muted);font-size:10.5px;background:var(--surface2);border-radius:999px;padding:3px 6px;min-width:34px;text-align:center;font-weight:700}
+.tv-legend .empty,.tv .empty{color:var(--t-muted);font-size:13px}
+.tv-card.empty{padding:16px}
+.tv .exp-tile{border-radius:8px;width:24px;height:24px}
+.tv-note{margin:-4px 4px 0;font-size:12px;color:var(--t-muted)}
+.tv-list{display:flex;flex-direction:column;gap:10px}
+.tv-row{width:100%;border:1px solid var(--line);background:var(--t-card);color:var(--t-ink);display:flex;align-items:center;gap:10px;padding:14px 12px;text-align:left;cursor:pointer;border-radius:22px;box-shadow:var(--t-shadow)}
+.tv-badge{width:46px;height:46px;border-radius:50%;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;font-family:var(--font-num)}
+.tv-row .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.tv-row .tx b{font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tv-row .tx span{font-size:12px;color:var(--t-muted);white-space:nowrap}
+.tv-row .exp-pill{flex:0 0 auto;max-width:112px;overflow:hidden;text-overflow:ellipsis}
+.tv-row .amt{font-family:var(--font-num);font-weight:800;white-space:nowrap;color:var(--accent-text);font-size:17px;flex:0 0 auto}
+.tv-row .amt.dim{color:var(--faint);font-weight:600}
+.tv-more{align-self:center}
 </style>
 </head>
 <body>
@@ -711,16 +777,16 @@ function monthSummaryText(st, key){
 
 /* ---------- expenses (bank slips) ---------- */
 const EXP_CATS = {
-  food:   { label:'อาหาร/เครื่องดื่ม', color:'#F5A524' },
-  shop:   { label:'ช้อปปิ้ง',          color:'#E879F9' },
-  travel: { label:'เดินทาง/น้ำมัน',     color:'#4DABFF' },
-  bills:  { label:'บิล/เน็ต/โทรศัพท์', color:'#34D399' },
-  people: { label:'โอนให้คน',          color:'#A78BFA' },
-  other:  { label:'อื่นๆ',              color:'#9A9AA0' },
-  self:   { label:'โอนเข้าบัญชีตัวเอง', color:'#22D3EE' },
+  food:   { label:'อาหาร/เครื่องดื่ม', color:'#F59E0B' },
+  shop:   { label:'ช้อปปิ้ง/ของใช้',   color:'#EC4899' },
+  travel: { label:'เดินทาง/น้ำมัน',     color:'#3B82F6' },
+  bills:  { label:'เน็ต/สาธารณูปโภค',  color:'#10B981' },
+  people: { label:'โอนเงิน/บุคคล',     color:'#8B5CF6' },
+  other:  { label:'อื่นๆ',              color:'#94A3B8' },
+  self:   { label:'โอนเข้าบัญชีตัวเอง', color:'#06B6D4' },
   ignore: { label:'ไม่นับ',             color:'#6B6B72' }
 };
-const EXP_UNCAT = { label:'ยังไม่จัดหมวด', color:'#6B6B72' };
+const EXP_UNCAT = { label:'ยังไม่จัดหมวด', color:'#64748B' };
 // built-in rules, used only when no rule of the user's matches
 const EXP_DEFAULT_RULES = [
   [/shopee|lazada|ช้อปปี้|ลาซาด้า/i, 'shop'],
@@ -1132,17 +1198,17 @@ const EXP_ICON_PATH = {
 const expIcon = (c, size) => '<svg width="'+(size||18)+'" height="'+(size||18)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(EXP_ICON_PATH[c] || EXP_ICON_PATH.uncat)+'</svg>';
 const expTile = c => { const ci = expCatInfo(c); return '<span class="exp-tile" style="--c:'+ci.color+'">'+expIcon(c, 16)+'</span>'; };
 const expPill = (c, label) => { const ci = expCatInfo(c); return '<span class="exp-pill" style="--c:'+ci.color+'">'+expIcon(c, 13)+esc(label || ci.label)+'</span>'; };
-const EXP_APP = { kplus:{ badge:'K+', name:'K PLUS', color:'#12A150' }, make:{ badge:'MK', name:'MAKE', color:'#0EA5C6' } };
+const EXP_APP = { kplus:{ badge:'K+', name:'K PLUS', color:'#2E9E5B' }, make:{ badge:'MK', name:'MAKE', color:'#1AA3C8' } };
 let moneyShowAll = false;
 
 function expDonut(cats, total){
-  const R = 48, C = 2*Math.PI*R; let off = 0;
-  const gap = cats.length > 1 ? 2 : 0;
+  const R = 46, SW = 20, C = 2*Math.PI*R; let off = 0;
+  const gap = cats.length > 1 ? 2.5 : 0;
   const arcs = total > 0 ? cats.map(([c, v]) => {
-    const len = C * v / total, vis = Math.max(0.5, len - gap);
-    const a = '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+expCatInfo(c).color+'" stroke-width="15" stroke-dasharray="'+vis.toFixed(2)+' '+(C-vis).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 60 60)"></circle>';
+    const len = C * v / total, vis = Math.max(0.6, len - gap);
+    const a = '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+expCatInfo(c).color+'" stroke-width="'+SW+'" stroke-dasharray="'+vis.toFixed(2)+' '+(C-vis).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 60 60)"></circle>';
     off += len; return a; }).join('') : '';
-  return '<div class="exp-donut"><svg width="128" height="128" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--track)" stroke-width="15"></circle>'+arcs+'</svg>'+
+  return '<div class="tv-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="'+R+'" fill="none" style="stroke:var(--track)" stroke-width="'+SW+'"></circle>'+arcs+'</svg>'+
     '<div class="c"><small>รวมทั้งหมด</small><b>'+fmtBahtShort(total)+'</b></div></div>';
 }
 function expMonths(){
@@ -1150,50 +1216,75 @@ function expMonths(){
   state.expenses.forEach(e => ks.add(monthKey(e.date)));
   const sorted = [...ks].sort(); return monthsFrom(sorted[0], cur);
 }
+const fmtThDate = s => { const d = parse(s); return d.getDate()+' '+TH_M[d.getMonth()]+' '+beYear(d.getFullYear()); };
+const fmtSlash = iso => { try { const d = new Date(iso); return d.getDate()+'/'+(d.getMonth()+1)+'/'+beYear(d.getFullYear())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+' น.'; } catch(e){ return ''; } };
 function expRowHtml(e, S){
   const kd = expKind(e, S.own, S.ownNames);
   const c = kd === 'self' ? 'self' : kd === 'topup' ? 'topup' : (e.cat || 'uncat');
   const dim = kd === 'self' || kd === 'ignore' || (kd === 'topup' && !state.exprules.includeTopup);
   const app = EXP_APP[e.app] || EXP_APP.kplus;
-  const d = parse(e.date);
-  const when = d.getDate()+' '+TH_M[d.getMonth()]+' '+beYear(d.getFullYear())+(e.time ? ' • '+esc(e.time)+' น.' : '');
-  return '<button type="button" class="exp-row" data-exp="'+esc(e.id)+'">'+
-    '<span class="exp-badge" style="background:'+app.color+'">'+app.badge+'</span>'+
-    '<span class="tx"><b>'+esc(e.to || ((e.type || 'โอนเงิน')+'ผ่าน '+app.name))+'</b><span>'+when+' · '+esc((e.type || 'โอนเงิน')+'ผ่าน '+app.name)+'</span></span>'+
-    '<span class="rt">'+expPill(c)+'<span class="amt'+(dim?' dim':'')+'">-'+fmtBaht((Number(e.amount)||0)+(Number(e.fee)||0))+'</span></span></button>';
+  return '<button type="button" class="tv-row" data-exp="'+esc(e.id)+'">'+
+    '<span class="tv-badge" style="background:'+app.color+'">'+app.badge+'</span>'+
+    '<span class="tx"><b>'+esc(e.to || ((e.type || 'โอนเงิน')+'ผ่าน '+app.name))+'</b><span>'+fmtThDate(e.date)+(e.time ? ' • '+esc(e.time)+' น.' : '')+'</span></span>'+
+    expPill(c)+'<span class="amt'+(dim?' dim':'')+'">-'+fmtBaht((Number(e.amount)||0)+(Number(e.fee)||0))+'</span></button>';
 }
+// original illustration: a stack of slips with a scan beam (no third-party artwork)
+const TV_HERO_ART = '<svg class="art" viewBox="0 0 200 150" aria-hidden="true">'+
+  '<circle cx="62" cy="80" r="56" style="fill:color-mix(in srgb,var(--accent) 14%,transparent)"></circle><circle cx="150" cy="30" r="14" style="fill:color-mix(in srgb,var(--accent) 10%,transparent)"></circle>'+
+  '<g transform="rotate(-8 70 80)"><rect x="34" y="34" width="72" height="92" rx="10" style="fill:var(--surface);stroke:var(--line)"></rect>'+
+  '<rect x="44" y="46" width="30" height="6" rx="3" style="fill:var(--faint)"></rect><rect x="44" y="58" width="48" height="5" rx="2.5" style="fill:var(--track)"></rect>'+
+  '<rect x="44" y="68" width="40" height="5" rx="2.5" style="fill:var(--track)"></rect><rect x="44" y="90" width="22" height="7" rx="3" style="fill:var(--accent)"></rect>'+
+  '<rect x="78" y="96" width="18" height="18" rx="2" style="fill:var(--fg)"></rect><rect x="81" y="99" width="5" height="5" style="fill:var(--surface)"></rect><rect x="88" y="106" width="5" height="5" style="fill:var(--surface)"></rect></g>'+
+  '<path d="M104 52 L170 34 L170 112 L104 98 Z" style="fill:var(--accent);opacity:.18"></path>'+
+  '<rect x="148" y="40" width="40" height="66" rx="9" style="fill:var(--surface);stroke:var(--line)"></rect><rect x="155" y="50" width="26" height="4" rx="2" style="fill:var(--faint)"></rect>'+
+  '<circle cx="168" cy="78" r="10" style="fill:var(--vac)"></circle><path d="M163 78l3.5 3.5L173 75" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+let moneyHeroOpen = true;
 function viewMoney(){
-  const GEAR = '<button type="button" class="icon-btn" id="expSettings" aria-label="ตั้งค่ารายจ่าย"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>';
   const keys = expMonths();
   if (!moneyMonth || !keys.includes(moneyMonth)) moneyMonth = keys[keys.length-1];
   const k = moneyMonth, i = keys.indexOf(k);
   const S = expMonthSummary(state.expenses, k, !!state.exprules.includeTopup);
-  const scan = nat()
-    ? '<div class="card cut-2 exp-scan"><div class="tx"><b>สแกนสลิป</b><span>'+(slipCfg.lastScanAt ? 'สแกนล่าสุด '+fmtTime(slipCfg.lastScanAt) : 'ยังไม่เคยสแกน')+' · บันทึกแล้ว '+state.expenses.length+' รายการ</span></div>'+
-      '<span class="acts"><button type="button" class="btn btn-primary" id="expScan"'+(slipScanning?' disabled':'')+'>'+(slipScanning ? 'กำลังสแกน…' : 'สแกนสลิปใหม่')+'</button>'+GEAR+'</span></div>'
-    : '<div class="card cut-2 exp-scan"><div class="tx"><b>สแกนสลิป</b><span>สแกนสลิปได้ในแอป Android · ที่นี่ดูและแก้หมวดได้</span></div>'+GEAR+'</div>';
-  const nav = '<div class="card cal-head tl-nav"><button type="button" class="icon-btn" id="expPrev" aria-label="เดือนก่อนหน้า"'+(i<=0?' disabled':'')+'>'+ICON.left+'</button>'+
-    '<b>'+fmtMonth(k)+'</b><button type="button" class="icon-btn" id="expNext" aria-label="เดือนถัดไป"'+(i>=keys.length-1?' disabled':'')+'>'+ICON.right+'</button></div>';
+  const allOwn = expOwnAccounts(state.expenses), allNames = expOwnNames(state.expenses);
+  const counted = state.expenses.filter(e => { const kd = expKind(e, allOwn, allNames); return kd !== 'self' && kd !== 'ignore'; });
+  const grand = counted.reduce((a, e) => a + (Number(e.amount)||0) + (Number(e.fee)||0), 0);
+  const latest = state.expenses.slice().sort((a,b) => String(b.scannedAt||'').localeCompare(String(a.scannedAt||'')) || (b.date+(b.time||'')).localeCompare(a.date+(a.time||'')))[0];
+  const scanIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"></path></svg>';
+  const clockI = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>';
+  const chartI = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V4M4 20h16M9 16v-5M14 16V8M19 16v-3"></path></svg>';
+  const status = '<div class="tv-card tv-status">'+
+    (nat() ? '<button type="button" class="tv-auto" id="expScan"'+(slipScanning?' disabled':'')+'>'+scanIcon+(slipScanning ? 'กำลังสแกน…' : 'สแกนสลิป')+'</button>'
+           : '<span class="tv-auto off">'+scanIcon+'เว็บ</span>')+
+    '<span class="when">'+clockI+(slipCfg.lastScanAt ? fmtSlash(slipCfg.lastScanAt) : 'ยังไม่เคยสแกน')+'</span>'+
+    '<button type="button" class="tv-link" id="expSettings">ตั้งค่า & สถิติ ▾</button></div>';
+  const lastCat = latest ? (expKind(latest, allOwn, allNames) === 'self' ? 'self' : expKind(latest, allOwn, allNames) === 'topup' ? 'topup' : (latest.cat || 'uncat')) : null;
+  const hero = '<div class="tv-card tv-head">'+
+    '<div class="top"><span class="logo">'+expIcon('bills', 26)+'</span><span class="tt"><b>สมุดบันทึกรายจ่าย</b><span>บันทึกแล้ว '+state.expenses.length+' รายการ • สแกนจากสลิปให้อัตโนมัติ</span></span>'+
+    '<button type="button" class="tv-fold" id="expFold" aria-expanded="'+moneyHeroOpen+'">'+(moneyHeroOpen ? 'ย่อ ▴' : 'ขยาย ▾')+'</button></div>'+
+    (moneyHeroOpen ? '<div class="tv-hero">'+TV_HERO_ART+
+      (latest ? '<span class="done">✓ บันทึกรายการแล้ว!</span>' : '<span class="done wait">ยังไม่มีรายการ</span>')+
+      '<div class="mini"><div><span>'+esc(latest ? expCatInfo(lastCat).label : 'รายการล่าสุด')+'</span><b>'+(latest ? fmtBaht((Number(latest.amount)||0)+(Number(latest.fee)||0)) : '-')+'</b></div>'+
+      '<div><span>รวมที่บันทึกแล้ว</span><b class="g">'+fmtBaht(Math.round(grand*100)/100)+'</b></div></div></div>'+
+      '<p class="cap">✨ My Log · เก็บทุกรายจ่ายจากสลิปให้อัตโนมัติ</p>' : '')+'</div>';
+  const nav = '<div class="tv-month"><button type="button" id="expPrev" aria-label="เดือนก่อนหน้า"'+(i<=0?' disabled':'')+'>‹</button><b>'+fmtMonth(k)+'</b><button type="button" id="expNext" aria-label="เดือนถัดไป"'+(i>=keys.length-1?' disabled':'')+'>›</button></div>';
   const legend = S.cats.length ? S.cats.map(([c, v]) => {
       const pct = S.total ? v*100/S.total : 0;
       return '<div class="lg"><i style="background:'+expCatInfo(c).color+'"></i>'+expTile(c)+'<span class="nm">'+esc(expCatInfo(c).label)+'</span><b>'+fmtBaht(v)+'</b><em>'+(pct > 0 && pct < 1 ? '<1' : Math.round(pct))+'%</em></div>'; }).join('')
-    : '<div class="muted" style="font-size:13px">ยังไม่มีรายจ่ายเดือนนี้</div>';
+    : '<div class="empty">ยังไม่มีรายจ่ายเดือนนี้</div>';
   const notes = [];
-  if (S.uncat) notes.push('<span>รอจัดหมวด <b>'+S.uncat+'</b> รายการ แตะรายการเพื่อเลือกหมวด</span>');
-  if (S.topup && !state.exprules.includeTopup) notes.push('<span>เติมเงิน '+fmtBaht(S.topup)+' (ไม่รวมในยอด)</span>');
-  if (S.self) notes.push('<span>โอนเข้าบัญชีตัวเอง '+fmtBaht(S.self)+' (ไม่นับ)</span>');
+  if (S.uncat) notes.push('รอจัดหมวด <b>'+S.uncat+'</b> รายการ แตะรายการเพื่อเลือกหมวด');
+  if (S.topup && !state.exprules.includeTopup) notes.push('เติมเงิน '+fmtBaht(S.topup)+' (ไม่รวมในยอด)');
+  if (S.self) notes.push('โอนเข้าบัญชีตัวเอง '+fmtBaht(S.self)+' (ไม่นับ)');
   const LIMIT = 5, shown = moneyShowAll ? S.items : S.items.slice(0, LIMIT);
   const rows = S.items.length ? shown.map(e => expRowHtml(e, S)).join('')
-    : '<div class="all-done">ยังไม่มีรายการ'+(nat() ? ' กด "สแกนสลิปใหม่" เพื่อดึงสลิปจากแกลเลอรี' : '')+'</div>';
-  const more = S.items.length > LIMIT ? '<button type="button" class="link-btn exp-more" id="expAll">'+(moneyShowAll ? 'ย่อ' : 'ดูทั้งหมด '+S.items.length+' รายการ')+' '+(moneyShowAll ? '‹' : '›')+'</button>' : '';
-  const clock = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>';
-  const chart = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V4M4 20h16M9 16v-5M14 16V8M19 16v-3"></path></svg>';
-  return scan + nav +
-    '<div class="exp-h"><h2>'+chart+'สรุปค่าใช้จ่ายรายหมวดหมู่</h2><span class="acts"><button type="button" class="exp-cmp" id="expCmp">'+chart.replace('width="20" height="20"','width="16" height="16"')+'เปรียบเทียบ 2 เดือน</button></span></div>'+
-    '<div class="card exp-sum">'+expDonut(S.cats, S.total)+'<div class="exp-legend">'+legend+'</div></div>'+
-    (notes.length ? '<div class="exp-note">'+notes.join('')+'</div>' : '')+
-    '<div class="exp-h"><h2>'+clock+'รายการล่าสุด</h2>'+(S.items.length > LIMIT ? '<button type="button" class="link-btn" id="expAllTop">'+(moneyShowAll ? 'ย่อ' : 'ดูทั้งหมด')+' ›</button>' : '<span class="aside">'+S.items.length+' รายการ</span>')+'</div>'+
-    '<div class="exp-list">'+rows+'</div>'+more;
+    : '<div class="tv-card empty">ยังไม่มีรายการ'+(nat() ? ' กด "สแกนสลิป" ด้านบนเพื่อดึงสลิปจากแกลเลอรี' : '')+'</div>';
+  return '<div class="tv">'+status+hero+nav+
+    '<div class="tv-h"><h2>'+chartI+'<span>สรุปค่าใช้จ่ายรายหมวดหมู่</span></h2><button type="button" class="tv-cmp" id="expCmp">'+chartI.replace(/20/g,'16')+'เปรียบเทียบ 2 เดือน</button></div>'+
+    '<div class="tv-card tv-sum">'+expDonut(S.cats, S.total)+'<div class="tv-legend">'+legend+'</div></div>'+
+    (notes.length ? '<p class="tv-note">'+notes.join(' · ')+'</p>' : '')+
+    '<div class="tv-h"><h2>'+clockI.replace(/18/g,'20')+'รายการล่าสุด</h2>'+(S.items.length > LIMIT ? '<button type="button" class="tv-link" id="expAllTop">'+(moneyShowAll ? 'ย่อ ‹' : 'ดูทั้งหมด ›')+'</button>' : '<span class="tv-aside">'+S.items.length+' รายการ</span>')+'</div>'+
+    '<div class="tv-list">'+rows+'</div>'+
+    (S.items.length > LIMIT ? '<button type="button" class="tv-link tv-more" id="expAll">'+(moneyShowAll ? 'ย่อ ‹' : 'ดูทั้งหมด '+S.items.length+' รายการ ›')+'</button>' : '')+
+    '</div>';
 }
 function openExpCompare(){
   const keys = expMonths(), k = moneyMonth, prev = shiftMonth(k, -1);
@@ -1218,6 +1309,7 @@ function bindMoney(){
   on('#expCmp', openExpCompare);
   const toggle = () => { moneyShowAll = !moneyShowAll; render(); };
   on('#expAll', toggle); on('#expAllTop', toggle);
+  on('#expFold', () => { moneyHeroOpen = !moneyHeroOpen; render(); });
   document.querySelectorAll('[data-exp]').forEach(b => b.addEventListener('click', () => openExpense(state.expenses.find(e => e.id === b.dataset.exp))));
 }
 
