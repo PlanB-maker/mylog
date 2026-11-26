@@ -8,14 +8,14 @@
  *  4. Copy the Web app URL into the app (MY LOG > ตั้งค่า > ซิงค์กับ Google Sheets).
  *
  * The "docs" tab is the app's data — do not edit it by hand.
- * The "ลา" and "Timesheet" tabs are read-only views rebuilt on every sync;
+ * The "ลา", "Timesheet" and "รายจ่าย" tabs are read-only views rebuilt on every sync;
  * edits there are not sent back to the app.
  */
 const TOKEN = 'CHANGE_ME';
 
 const DOCS_SHEET = 'docs';
 const HEADER = ['path', 'json', 'updatedAt', 'deleted', 'serverAt'];
-const PATH_RE = /^(leaves|timesheets|holidays|settings|fuel|places|vehicle|months)\/[A-Za-z0-9_\-.~:@+]{1,200}$/;
+const PATH_RE = /^(leaves|timesheets|holidays|settings|fuel|places|vehicle|months|expenses|exprules)\/[A-Za-z0-9_\-.~:@+]{1,200}$/;
 const MAX_DOCS_PER_CALL = 500;
 
 function doGet() {
@@ -99,7 +99,17 @@ function rebuildViews_(rows) {
     .map(r => [String(r[0]).split('/')[1], JSON.parse(r[1])]).sort((a, b) => a[0] < b[0] ? -1 : 1)
     .map(([k, t]) => [k, yes_(t.signed), yes_(t.sent)]);
   writeView_('Timesheet', ['เดือน', 'หัวหน้าเซ็นแล้ว', 'ส่ง HR แล้ว'], ts);
+  const exps = live.filter(r => String(r[0]).indexOf('expenses/') === 0).map(r => JSON.parse(r[1]))
+    .filter(x => x.date).sort((a, b) => (a.date + (a.time || '')) < (b.date + (b.time || '')) ? -1 : 1);
+  const own = {};
+  exps.forEach(x => { if (x.from_acct) own[x.from_acct] = true; });
+  writeView_('รายจ่าย', ['วันที่', 'เวลา', 'ผู้รับ', 'หมวด', 'ประเภทสลิป', 'จำนวน', 'ค่าธรรมเนียม', 'เลขที่รายการ', 'แอป'],
+    exps.map(x => [x.date, x.time || '', x.to || '',
+      x.type === 'เติมเงิน' ? 'เติมเงิน' : (x.to_acct && own[x.to_acct]) ? 'โอนเข้าบัญชีตัวเอง' : (EXP_CAT_TH_[x.cat] || 'ยังไม่จัดหมวด'),
+      x.type || '', Number(x.amount || 0).toFixed(2), Number(x.fee || 0).toFixed(2), x.ref || '', x.app === 'make' ? 'MAKE' : 'K PLUS']));
 }
+
+const EXP_CAT_TH_ = { food: 'อาหาร/เครื่องดื่ม', shop: 'ช้อปปิ้ง', travel: 'เดินทาง/น้ำมัน', bills: 'บิล/เน็ต/โทรศัพท์', people: 'โอนให้คน', other: 'อื่นๆ', ignore: 'ไม่นับ' };
 
 function yes_(v) { return v ? 'ใช่' : '-'; }
 

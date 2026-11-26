@@ -241,7 +241,7 @@ header.top h1{margin:0;font-size:24px;font-weight:700;line-height:1.25;text-wrap
 .fab-menu .btn:disabled{color:var(--faint);cursor:default}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);
   padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-nav.tabs .inner{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:72px}
+nav.tabs .inner{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:72px}
 nav.tabs button{border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;cursor:pointer;position:relative}
 nav.tabs button[aria-current="page"]{color:var(--accent-text);font-weight:600}
 nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;left:28%;right:28%;height:3px;background:var(--accent)}
@@ -271,6 +271,44 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
   .sheet{animation:up .18s ease-out}
   @keyframes up{from{transform:translateY(24px)}to{transform:none}}
 }
+/* expenses */
+.exp-scan{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.exp-scan .tx{display:flex;flex-direction:column;min-width:0}
+.exp-scan .tx b{font-size:16px}
+.exp-scan .tx span{font-size:12px;color:var(--muted)}
+.exp-sum{padding:16px;display:flex;gap:16px;align-items:center}
+.exp-donut{flex:0 0 auto;position:relative;width:120px;height:120px}
+.exp-donut .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.exp-donut .c small{font-size:11px;color:var(--muted)}
+.exp-donut .c b{font-family:var(--font-num);font-size:20px}
+.exp-legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.exp-legend div{display:flex;align-items:center;gap:8px}
+.exp-legend i{width:10px;height:10px;flex:0 0 auto}
+.exp-legend span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-legend b{font-family:var(--font-num);font-weight:600}
+.exp-legend em{font-style:normal;color:var(--muted);font-size:12px;min-width:34px;text-align:right}
+.exp-note{font-size:12px;color:var(--muted);padding:8px 4px 0;display:flex;flex-wrap:wrap;gap:4px 14px}
+.exp-row{width:100%;border:0;background:var(--surface);color:var(--fg);display:flex;align-items:center;gap:12px;padding:12px 14px;text-align:left;cursor:pointer;border-bottom:1px solid var(--line)}
+.exp-row .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.exp-row .tx b{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-row .tx span{font-size:12px;color:var(--muted)}
+.exp-row .amt{font-family:var(--font-num);font-weight:700;white-space:nowrap}
+.exp-row .amt.dim{color:var(--muted);font-weight:500}
+.exp-chip{display:inline-flex;align-items:center;gap:5px}
+.exp-chip i{width:8px;height:8px;display:inline-block}
+.exp-cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.exp-cats input{position:absolute;opacity:0;pointer-events:none}
+.exp-cats label{background:var(--surface2);border:1px solid var(--line);min-height:44px;display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:14px;cursor:pointer}
+.exp-cats label i{width:10px;height:10px;flex:0 0 auto}
+.exp-cats input:checked + label{border-color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--accent-text);font-weight:700}
+.exp-cats input:focus-visible + label{outline:2px solid var(--accent-text);outline-offset:2px}
+.exp-kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:0 0 16px}
+.exp-kv dt{color:var(--muted)}
+.exp-kv dd{margin:0;word-break:break-word}
+.exp-prog{height:6px;background:var(--track);margin:12px 0}
+.exp-prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+.exp-rule{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.exp-rule span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -313,6 +351,8 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>ลา</button>
     <button type="button" data-tab="car">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="17" r="3"></circle><circle cx="18" cy="17" r="3"></circle><path d="M9 17h6l-3-7h4M6 17l3-6h3"></path></svg>รถ</button>
+    <button type="button" data-tab="money">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="13" rx="1"></rect><circle cx="12" cy="12.5" r="2.5"></circle><path d="M6 9.5v.01M18 15.5v.01"></path></svg>รายจ่าย</button>
     <button type="button" data-tab="summary">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>สรุป</button>
   </div>
@@ -652,11 +692,83 @@ function monthSummaryText(st, key){
   }
   return lines.join('\n');
 }
+
+/* ---------- expenses (bank slips) ---------- */
+const EXP_CATS = {
+  food:   { label:'อาหาร/เครื่องดื่ม', color:'#F5A524' },
+  shop:   { label:'ช้อปปิ้ง',          color:'#E879F9' },
+  travel: { label:'เดินทาง/น้ำมัน',     color:'#4DABFF' },
+  bills:  { label:'บิล/เน็ต/โทรศัพท์', color:'#34D399' },
+  people: { label:'โอนให้คน',          color:'#A78BFA' },
+  other:  { label:'อื่นๆ',              color:'#9A9AA0' },
+  ignore: { label:'ไม่นับ',             color:'#6B6B72' }
+};
+const EXP_UNCAT = { label:'ยังไม่จัดหมวด', color:'#6B6B72' };
+// built-in rules, used only when no rule of the user's matches
+const EXP_DEFAULT_RULES = [
+  [/shopee|lazada|ช้อปปี้|ลาซาด้า/i, 'shop'],
+  [/เอไอเอส|\bais\b|ไฟเบอร์|fibre|ทรูมูฟ|true ?move|ดีแทค|dtac|การไฟฟ้า|การประปา/i, 'bills'],
+  [/ปตท|\bptt\b|บางจาก|bangchak|เชลล์|shell|คาลเท็กซ์|caltex/i, 'travel']
+];
+// name key for matching: no spaces, no Thai above/below marks (OCR often drops or adds a tone mark)
+const expKey = s => String(s||'').toLowerCase().replace(/[\s.,()\-]/g,'').replace(/[ัิ-ฺ็-๎]/g,'');
+function levRatio(a, b){
+  if (a === b) return 1;
+  const m = a.length, n = b.length; if (!m || !n) return 0;
+  let prev = Array.from({ length:n+1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    prev = cur;
+  }
+  return 1 - prev[n] / Math.max(m, n);
+}
+function expRuleHit(ruleKey, name){
+  const k = expKey(name);
+  if (!ruleKey || !k) return false;
+  if (k === ruleKey || (ruleKey.length >= 6 && (k.includes(ruleKey) || (ruleKey.includes(k) && k.length >= 6)))) return true;
+  return levRatio(ruleKey, k) >= 0.8;
+}
+// category for a new slip: the user's rules first, then built-in rules, then "people" for personal transfers
+function expAutoCat(e, rules){
+  const r = (rules||[]).find(x => expRuleHit(x.m, e.to));
+  if (r) return r.cat;
+  const d = EXP_DEFAULT_RULES.find(([re]) => re.test(e.to||''));
+  if (d) return d[1];
+  if (e.type === 'โอนเงิน' && /^(นาย|นาง|น\.ส\.|นางสาว|ด\.ช\.|ด\.ญ\.)/.test(e.to||'')) return 'people';
+  return null;
+}
+// accounts the user sends from = own accounts (seen as sender on any slip)
+function expOwnAccounts(list){ return new Set((list||[]).map(e => e.from_acct).filter(Boolean)); }
+function expKind(e, own){
+  if (e.type === 'เติมเงิน') return 'topup';
+  if (e.to_acct && own.has(e.to_acct)) return 'self';
+  if (e.cat === 'ignore') return 'ignore';
+  return 'spend';
+}
+function expMonthSummary(list, key, includeTopup){
+  const own = expOwnAccounts(list);
+  const items = (list||[]).filter(e => e.date && monthKey(e.date) === key)
+    .sort((a,b) => (b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
+  const byCat = {}; let total = 0, topup = 0, self = 0, uncat = 0;
+  items.forEach(e => {
+    const k = expKind(e, own), amt = (Number(e.amount)||0) + (Number(e.fee)||0);
+    if (k === 'self') { self += amt; return; }
+    if (k === 'ignore') return;
+    if (k === 'topup') { topup += amt; if (!includeTopup) return; }
+    const c = k === 'topup' ? 'topup' : (e.cat || 'uncat');
+    if (c === 'uncat') uncat++;
+    byCat[c] = (byCat[c]||0) + amt; total += amt;
+  });
+  const cats = Object.entries(byCat).sort((a,b) => b[1]-a[1]);
+  return { items, own, total, topup, self, uncat, cats };
+}
 /*LOGIC END*/
 
 /* ---------- state & store ---------- */
 const SETTINGS_DEFAULT = () => ({ quota:{...QUOTA_DEFAULT}, startMonth:'2026-03' });
-const state = { leaves:[], holidays:[], timesheets:{}, months:{}, places:{}, settings:SETTINGS_DEFAULT(), loaded:{leaves:true,holidays:true,ts:true,settings:true} };
+const EXPRULES_DEFAULT = () => ({ rules:[], includeTopup:false });
+const state = { leaves:[], holidays:[], timesheets:{}, months:{}, places:{}, expenses:[], exprules:EXPRULES_DEFAULT(), settings:SETTINGS_DEFAULT(), loaded:{leaves:true,holidays:true,ts:true,settings:true} };
 
 /* ---------- local store (this phone) ---------- */
 const STORE_KEY = 'mylog.store.v1', SYNC_KEY = 'mylog.sync.v1';
@@ -682,7 +794,7 @@ async function commit(path, op, data){
   return 'saved';
 }
 function recompute(){
-  const leaves = [], ts = {}, hol = [], months = {}, places = {}; let settings = SETTINGS_DEFAULT();
+  const leaves = [], ts = {}, hol = [], months = {}, places = {}, expenses = []; let settings = SETTINGS_DEFAULT(), exprules = EXPRULES_DEFAULT();
   Object.entries(store.docs).forEach(([p, d]) => {
     if (!d || d.deleted || !d.data) return;
     const [c, id] = p.split('/');
@@ -692,8 +804,10 @@ function recompute(){
     else if (c === 'months') months[id] = d.data;
     else if (c === 'places') places[id] = d.data;
     else if (p === 'settings/main') settings = Object.assign(SETTINGS_DEFAULT(), d.data);
+    else if (c === 'expenses') { if (d.data.date && d.data.amount != null) expenses.push({ id, ...d.data }); }
+    else if (p === 'exprules/main') exprules = Object.assign(EXPRULES_DEFAULT(), d.data);
   });
-  state.months = months; state.places = places;
+  state.months = months; state.places = places; state.expenses = expenses; state.exprules = exprules;
   state.leaves = leaves; state.timesheets = ts; state.holidays = hol; state.settings = settings;
 }
 
@@ -779,7 +893,7 @@ function exportData(){
 function importData(text){
   let j; try { j = JSON.parse(text); } catch(e){ return { ok:false, msg:'ไฟล์นี้ไม่ใช่ไฟล์สำรองของ My Log' }; }
   if (!j || j.app !== 'mylog' || !j.docs || typeof j.docs !== 'object') return { ok:false, msg:'ไฟล์นี้ไม่ใช่ไฟล์สำรองของ My Log' };
-  const valid = /^(leaves|timesheets|holidays|settings|fuel|places|vehicle|months)\/[A-Za-z0-9_\-.~:@+]+$/;
+  const valid = /^(leaves|timesheets|holidays|settings|fuel|places|vehicle|months|expenses|exprules)\/[A-Za-z0-9_\-.~:@+]+$/;
   let n = 0;
   Object.entries(j.docs).forEach(([p, data]) => { if (valid.test(p) && data && typeof data === 'object') { putDoc(p, data, false); n++; } });
   if (!storageOk) return { ok:false, msg:'เครื่องไม่ยอมให้เก็บข้อมูล' };
@@ -958,6 +1072,239 @@ function viewCar(){
   return '<div class="card cut-2 placeholder"><b>รถ · มาในเฟส 3</b><p>บันทึกเติมน้ำมันแบบเร็ว คำนวณ กม./ลิตร และเตือนรอบดูแล ADV160</p>'+
     '<ul><li>เติมน้ำมัน: ยอดเงิน + ลิตร</li><li>รอบน้ำมันเครื่อง เฟืองท้าย ยาง</li><li>เตือนต่อประกัน ภาษี พ.ร.บ.</li></ul></div>';
 }
+/* ---------- expenses tab (bank slips) ---------- */
+let moneyMonth = null;
+const SLIPSCAN_KEY = 'mylog.slipscan.v1';   // this phone only: chosen albums + scan position
+let slipCfg = Object.assign({ buckets:[], since:null, doneIds:[], lastScanAt:null }, loadJSON(SLIPSCAN_KEY, {}) || {});
+const saveSlipCfg = () => saveJSON(SLIPSCAN_KEY, slipCfg);
+let slipScanning = false;
+const fmtBaht = n => '฿'+Number(n||0).toLocaleString('th-TH', { minimumFractionDigits: Number(n)%1 ? 2 : 0, maximumFractionDigits: 2 });
+const expCatInfo = c => c === 'topup' ? { label:'เติมเงิน', color:'#F01E14' } : (EXP_CATS[c] || EXP_UNCAT);
+const XBTN = '<button type="button" class="icon-btn" data-close aria-label="ปิด"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>';
+
+function expDonut(cats, total){
+  const R = 48, C = 2*Math.PI*R; let off = 0;
+  const arcs = total > 0 ? cats.map(([c, v]) => {
+    const len = C * v / total, a = '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+expCatInfo(c).color+'" stroke-width="16" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 60 60)"></circle>';
+    off += len; return a; }).join('') : '';
+  return '<div class="exp-donut"><svg width="120" height="120" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--track)" stroke-width="16"></circle>'+arcs+'</svg>'+
+    '<div class="c"><small>รวมทั้งเดือน</small><b>'+fmtBaht(Math.round(total))+'</b></div></div>';
+}
+function expMonths(){
+  const cur = monthKey(TODAY()), ks = new Set([cur]);
+  state.expenses.forEach(e => ks.add(monthKey(e.date)));
+  const sorted = [...ks].sort(); return monthsFrom(sorted[0], cur);
+}
+function viewMoney(){
+  const keys = expMonths();
+  if (!moneyMonth || !keys.includes(moneyMonth)) moneyMonth = keys[keys.length-1];
+  const k = moneyMonth, i = keys.indexOf(k);
+  const S = expMonthSummary(state.expenses, k, !!state.exprules.includeTopup);
+  const scan = nat()
+    ? '<div class="card cut-2 exp-scan"><div class="tx"><b>สแกนสลิป</b><span>'+(slipCfg.lastScanAt ? 'สแกนล่าสุด '+fmtTime(slipCfg.lastScanAt) : 'ยังไม่เคยสแกน')+'</span></div>'+
+      '<button type="button" class="btn btn-primary" id="expScan"'+(slipScanning?' disabled':'')+'>'+(slipScanning ? 'กำลังสแกน…' : 'สแกนสลิปใหม่')+'</button></div>'
+    : '<div class="card cut-2 exp-scan"><div class="tx"><b>สแกนสลิป</b><span>สแกนสลิปได้ในแอป Android · ที่นี่ดูและแก้หมวดได้</span></div></div>';
+  const nav = '<div class="card cal-head tl-nav"><button type="button" class="icon-btn" id="expPrev" aria-label="เดือนก่อนหน้า"'+(i<=0?' disabled':'')+'>'+ICON.left+'</button>'+
+    '<b>'+fmtMonth(k)+'</b><button type="button" class="icon-btn" id="expNext" aria-label="เดือนถัดไป"'+(i>=keys.length-1?' disabled':'')+'>'+ICON.right+'</button></div>';
+  const legend = S.cats.length ? S.cats.map(([c, v]) => { const ci = expCatInfo(c);
+      return '<div><i style="background:'+ci.color+'"></i><span>'+esc(ci.label)+'</span><b>'+fmtBaht(v)+'</b><em>'+(S.total ? Math.round(v*100/S.total) : 0)+'%</em></div>'; }).join('')
+    : '<div class="muted">ยังไม่มีรายจ่ายเดือนนี้</div>';
+  const notes = [];
+  if (S.uncat) notes.push('<span>รอจัดหมวด <b>'+S.uncat+'</b> รายการ แตะรายการเพื่อเลือกหมวด</span>');
+  if (S.topup && !state.exprules.includeTopup) notes.push('<span>เติมเงิน '+fmtBaht(S.topup)+' (ไม่รวมในยอด)</span>');
+  if (S.self) notes.push('<span>โอนเข้าบัญชีตัวเอง '+fmtBaht(S.self)+' (ไม่นับ)</span>');
+  const rows = S.items.length ? S.items.map(e => {
+      const kd = expKind(e, S.own), ci = kd === 'self' ? { label:'บัญชีตัวเอง', color:'var(--faint)' } : kd === 'topup' ? expCatInfo('topup') : expCatInfo(e.cat || 'uncat');
+      const dim = kd === 'self' || kd === 'ignore' || (kd === 'topup' && !state.exprules.includeTopup);
+      return '<button type="button" class="exp-row" data-exp="'+esc(e.id)+'"><div class="tx"><b>'+esc(e.to || e.type || 'ไม่ทราบผู้รับ')+'</b>'+
+        '<span>'+fmtShort(e.date)+(e.time ? ' '+esc(e.time) : '')+' · <span class="exp-chip"><i style="background:'+ci.color+'"></i>'+esc(ci.label)+'</span></span></div>'+
+        '<span class="amt'+(dim?' dim':'')+'">-'+fmtBaht((Number(e.amount)||0)+(Number(e.fee)||0))+'</span></button>'; }).join('')
+    : '<div class="all-done">ยังไม่มีรายการ'+(nat() ? ' กด "สแกนสลิปใหม่" เพื่อดึงสลิปจากแกลเลอรี' : '')+'</div>';
+  return scan + nav +
+    '<div class="sec-h"><h2>สรุปตามหมวด</h2><button type="button" class="link-btn" id="expSettings">ตั้งค่า</button></div>'+
+    '<div class="card exp-sum">'+expDonut(S.cats, S.total)+'<div class="exp-legend">'+legend+'</div></div>'+
+    (notes.length ? '<div class="exp-note">'+notes.join('')+'</div>' : '')+
+    '<div class="sec-h"><h2>รายการ</h2><span class="aside">'+S.items.length+' รายการ</span></div>'+
+    '<div>'+rows+'</div>';
+}
+function bindMoney(){
+  const on = (sel, fn) => { const e = $(sel); if (e) e.addEventListener('click', fn); };
+  on('#expPrev', () => { const ks = expMonths(), i = ks.indexOf(moneyMonth); if (i > 0) { moneyMonth = ks[i-1]; render(); } });
+  on('#expNext', () => { const ks = expMonths(), i = ks.indexOf(moneyMonth); if (i < ks.length-1) { moneyMonth = ks[i+1]; render(); } });
+  on('#expScan', () => scanSlips());
+  on('#expSettings', openExpSettings);
+  document.querySelectorAll('[data-exp]').forEach(b => b.addEventListener('click', () => openExpense(state.expenses.find(e => e.id === b.dataset.exp))));
+}
+
+function openExpense(e){
+  if (!e) return;
+  const own = expOwnAccounts(state.expenses), kd = expKind(e, own);
+  const cats = Object.entries(EXP_CATS).map(([c, ci]) => '<input type="radio" name="expCat" id="ec_'+c+'" value="'+c+'"'+(e.cat===c?' checked':'')+'><label for="ec_'+c+'"><i style="background:'+ci.color+'"></i>'+esc(ci.label)+'</label>').join('');
+  const kindNote = kd === 'self' ? '<p class="muted" style="font-size:13px;margin:0 0 12px">โอนเข้าบัญชีของคุณเอง (ท้าย '+esc(e.to_acct)+') จึงไม่นับเป็นรายจ่าย</p>'
+    : kd === 'topup' ? '<p class="muted" style="font-size:13px;margin:0 0 12px">เติมเงินเข้ากระเป๋าเงิน แยกจากรายจ่าย'+(state.exprules.includeTopup ? ' (ตั้งค่าให้นับรวมในยอดอยู่)' : ' (ไม่รวมในยอด เปลี่ยนได้ที่ ตั้งค่า)')+'</p>' : '';
+  openSheet('<h3>รายการ'+XBTN+'</h3>'+
+    '<dl class="exp-kv"><dt>ผู้รับ</dt><dd>'+esc(e.to || '-')+'</dd><dt>จำนวน</dt><dd class="num"><b>'+fmtBaht(e.amount)+'</b>'+(Number(e.fee) ? ' + ค่าธรรมเนียม '+fmtBaht(e.fee) : '')+'</dd>'+
+    '<dt>วันเวลา</dt><dd>'+fmtLong(e.date)+(e.time ? ' '+esc(e.time)+' น.' : '')+'</dd><dt>ประเภท</dt><dd>'+esc(e.type || '-')+' · '+(e.app === 'make' ? 'MAKE by KBank' : 'K PLUS')+'</dd>'+
+    '<dt>เลขที่รายการ</dt><dd class="num" style="font-size:12px">'+esc(e.ref || e.id)+'</dd></dl>'+kindNote+
+    '<form id="expForm"><div class="field"><span class="lab" id="expCatLab">หมวด</span><div class="exp-cats" role="radiogroup" aria-labelledby="expCatLab">'+cats+'</div></div>'+
+    (e.to ? '<label class="check"><input type="checkbox" id="expRemember" checked><span>จำชื่อนี้ ครั้งหน้าจัดหมวดให้อัตโนมัติ<br><small>ใช้กับรายการเดิมที่ชื่อเดียวกันและยังไม่มีหมวดด้วย</small></span></label>' : '')+
+    '<p class="err" id="expErr" role="alert"></p><div class="sheet-actions"><button type="button" class="btn btn-danger" id="expDel">ลบ</button><button type="submit" class="btn btn-primary">บันทึก</button></div></form>');
+  const del = $('#expDel');
+  del.addEventListener('click', async () => {
+    if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'แตะอีกครั้งเพื่อลบ'; return; }
+    try { await commit('expenses/'+e.id, 'delete'); closeSheet(); toast('ลบรายการแล้ว'); } catch(ex){ $('#expErr').textContent = writeErrMsg(ex); }
+  });
+  $('#expForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const sel = $('#expForm').querySelector('input[name=expCat]:checked');
+    if (!sel) { $('#expErr').textContent = 'เลือกหมวดก่อน'; return; }
+    const cat = sel.value, { id, ...data } = e;
+    try {
+      putDoc('expenses/'+id, Object.assign({}, data, { cat }));
+      let n = 0;
+      const rem = $('#expRemember');
+      if (rem && rem.checked && e.to) {
+        const m = expKey(e.to), rules = (state.exprules.rules || []).filter(r => r.m !== m);
+        rules.unshift({ m, cat, name: e.to });
+        putDoc('exprules/main', Object.assign({}, state.exprules, { rules: rules.slice(0, 300) }));
+        state.expenses.forEach(x => {
+          if (x.id !== id && !x.cat && expRuleHit(m, x.to)) { const { id: xid, ...xd } = x; putDoc('expenses/'+xid, Object.assign({}, xd, { cat })); n++; }
+        });
+      }
+      await commit('expenses/'+id, 'set', Object.assign({}, data, { cat }));
+      closeSheet(); toast(n ? 'บันทึกแล้ว และจัดหมวดรายการชื่อเดียวกันอีก '+n+' รายการ' : 'บันทึกแล้ว');
+    } catch(ex){ $('#expErr').textContent = writeErrMsg(ex); }
+  });
+}
+
+function openExpSettings(){
+  const rules = state.exprules.rules || [];
+  const albums = slipCfg.buckets.length ? slipCfg.buckets.map(esc).join(', ') : 'ยังไม่ได้เลือก';
+  openSheet('<h3>ตั้งค่ารายจ่าย'+XBTN+'</h3>'+
+    '<label class="check"><input type="checkbox" id="expTopup"'+(state.exprules.includeTopup?' checked':'')+'><span>นับเติมเงิน (เช่น TrueMoney) รวมในยอดรายจ่าย<br><small>ปิดไว้: แสดงยอดเติมเงินแยก ไม่รวมในยอด</small></span></label>'+
+    (nat() ? '<div class="set-sec"><h4>อัลบั้มสลิป</h4><p class="muted" style="font-size:13px;margin:0 0 10px">'+albums+'</p>'+
+      '<div class="tool-row"><button type="button" class="btn btn-ghost" id="expAlbums">เลือกอัลบั้ม</button><button type="button" class="btn btn-ghost" id="expRescan">สแกนย้อนหลังใหม่</button></div>'+
+      '<p class="muted" style="font-size:12px;margin:8px 0 0">แอปอ่านรูปในอัลบั้มที่เลือกอย่างเดียว ไม่แก้ ไม่ลบรูปในแกลเลอรี และประมวลผลในเครื่อง ไม่ส่งรูปออกไปไหน</p></div>' : '')+
+    '<div class="set-sec"><h4>ชื่อที่จำไว้ ('+rules.length+')</h4>'+
+      (rules.length ? rules.map((r, i) => '<div class="exp-rule"><span>'+esc(r.name || r.m)+' → '+esc(expCatInfo(r.cat).label)+'</span><button type="button" class="link-btn" data-rdel="'+i+'">ลบ</button></div>').join('')
+        : '<p class="muted" style="font-size:13px;margin:0">ยังไม่มี เวลาเลือกหมวดให้รายการ แอปจะจำชื่อไว้ให้</p>')+'</div>');
+  $('#expTopup').addEventListener('change', async ev => {
+    try { await commit('exprules/main', 'set', Object.assign({}, state.exprules, { includeTopup: ev.target.checked })); } catch(ex){ toast(writeErrMsg(ex)); }
+  });
+  document.querySelectorAll('[data-rdel]').forEach(b => b.addEventListener('click', async () => {
+    const rs = (state.exprules.rules || []).slice(); rs.splice(Number(b.dataset.rdel), 1);
+    try { await commit('exprules/main', 'set', Object.assign({}, state.exprules, { rules: rs })); openExpSettings(); } catch(ex){ toast(writeErrMsg(ex)); }
+  }));
+  const a = $('#expAlbums'); if (a) a.addEventListener('click', () => pickSlipAlbums(false));
+  const r = $('#expRescan'); if (r) r.addEventListener('click', openRescan);
+}
+function openRescan(){
+  openSheet('<h3>สแกนย้อนหลังใหม่'+XBTN+'</h3><p class="muted" style="font-size:13px;margin:0 0 12px">สแกนสลิปในอัลบั้มอีกครั้งตั้งแต่วันที่เลือก รายการที่บันทึกไว้แล้วจะไม่ซ้ำ</p>'+
+    '<div class="field"><label for="rsFrom">ตั้งแต่วันที่</label><input class="input num" type="date" id="rsFrom" value="'+monthKey(TODAY())+'-01"></div>'+
+    '<div class="sheet-actions"><span></span><button type="button" class="btn btn-primary" id="rsGo">สแกน</button></div>');
+  $('#rsGo').addEventListener('click', () => {
+    const v = $('#rsFrom').value; if (!v) return;
+    slipCfg.since = Math.floor(parse(v).getTime()/1000) - 1; slipCfg.doneIds = []; saveSlipCfg();
+    closeSheet(); scanSlips();
+  });
+}
+async function ensureSlipAccess(){
+  const N = nat(); if (!N) return false;
+  let a; try { a = await N.slipAccess(); } catch(e){ a = { granted:false }; }
+  if (a.granted) return true;
+  try { a = await N.requestSlipAccess(); } catch(e){ a = { granted:false }; }
+  if (!a.granted) toast('ต้องอนุญาตให้เข้าถึงรูปภาพ (เลือก "อนุญาตทั้งหมด") ถึงจะสแกนสลิปได้');
+  return !!a.granted;
+}
+// resolve(true) when the user saved a choice
+function pickSlipAlbums(thenScan){
+  return new Promise(async resolve => {
+    if (!(await ensureSlipAccess())) return resolve(false);
+    let list = [];
+    try { list = ((await nat().listImageBuckets()) || {}).buckets || []; } catch(e){ toast('อ่านรายชื่ออัลบั้มไม่ได้'); return resolve(false); }
+    const guess = n => /k ?\+|k ?plus|kplus|make|kbank|กสิกร/i.test(n);
+    const chosen = new Set(slipCfg.buckets.length ? slipCfg.buckets : list.filter(b => guess(b.name)).map(b => b.name));
+    openSheet('<h3>เลือกอัลบั้มสลิป'+XBTN+'</h3><p class="muted" style="font-size:13px;margin:0 0 10px">เลือกอัลบั้มที่ K PLUS / MAKE บันทึกสลิปไว้ (ดูได้ในแอปแกลเลอรี)</p>'+
+      '<div id="albList">'+(list.length ? list.map((b, i) => '<label class="check"><input type="checkbox" data-alb="'+i+'"'+(chosen.has(b.name)?' checked':'')+'><span>'+esc(b.name || '(ไม่มีชื่อ)')+' <small>'+b.count+' รูป</small></span></label>').join('')
+        : '<p class="muted">ไม่พบรูปในเครื่อง</p>')+'</div>'+
+      '<p class="err" id="albErr" role="alert"></p><div class="sheet-actions"><span></span><button type="button" class="btn btn-primary" id="albSave">'+(thenScan ? 'บันทึกแล้วสแกน' : 'บันทึก')+'</button></div>');
+    $('#albSave').addEventListener('click', () => {
+      const names = [...document.querySelectorAll('[data-alb]')].filter(x => x.checked).map(x => list[Number(x.dataset.alb)].name);
+      if (!names.length) { $('#albErr').textContent = 'เลือกอย่างน้อย 1 อัลบั้ม'; return; }
+      const changed = names.join('\n') !== slipCfg.buckets.join('\n');
+      slipCfg.buckets = names; if (changed) slipCfg.doneIds = []; saveSlipCfg();
+      closeSheet(); resolve(true);
+    });
+  });
+}
+function scanProgress(text, frac){
+  const t = document.getElementById('scanText'), b = document.getElementById('scanBar');
+  if (t) t.textContent = text; if (b) b.style.width = Math.round(Math.max(0, Math.min(1, frac))*100)+'%';
+}
+async function scanSlips(){
+  const N = nat(); if (!N || slipScanning) return;
+  if (!(await ensureSlipAccess())) return;
+  if (!slipCfg.buckets.length && !(await pickSlipAlbums(true))) return;
+  if (slipCfg.since == null) { slipCfg.since = Math.floor(parse(monthKey(TODAY())+'-01').getTime()/1000) - 1; slipCfg.doneIds = []; saveSlipCfg(); }
+  slipScanning = true; render();
+  let cancelled = false, seen = 0, added = 0, dup = 0, bad = 0;
+  openSheet('<h3>กำลังสแกนสลิป</h3><p class="muted" id="scanText" style="font-size:14px;margin:0">กำลังเตรียมตัวอ่านสลิป…</p><div class="exp-prog"><i id="scanBar"></i></div>'+
+    '<p class="muted" style="font-size:12px;margin:0 0 8px">ประมวลผลในเครื่อง ไม่ส่งรูปออกไปไหน</p><div class="sheet-actions"><span></span><button type="button" class="btn btn-ghost" id="scanStop">หยุด</button></div>');
+  $('#scanStop').addEventListener('click', () => { cancelled = true; scanProgress('กำลังหยุด…', 1); });
+  try {
+    await SlipScanLoader();
+    await window.SlipScan.init('slip/');
+    for (;;) {
+      if (cancelled) break;
+      // ask from one second before the last position and skip the ids already done in that second,
+      // so images saved in the same second as the last processed one are not missed
+      const res = await N.listNewSlipImages({ since: String(Math.max(0, slipCfg.since - 1)), buckets: slipCfg.buckets, limit: 10 });
+      const done = new Set(slipCfg.doneIds);
+      const imgs = (res.images || []).filter(im => !(im.added <= slipCfg.since && done.has(im.id)));
+      if (!imgs.length) { if (!res.more) break; slipCfg.since += 1; slipCfg.doneIds = []; saveSlipCfg(); continue; }
+      for (const im of imgs) {
+        if (cancelled) break;
+        seen++; scanProgress('สแกนรูปที่ '+seen+' · พบสลิปใหม่ '+added+' รายการ', (imgs.indexOf(im)+1)/imgs.length);
+        let r = null;
+        try { r = await window.SlipScan.scanUrl(window.Capacitor.convertFileSrc(im.path), { yearHint: new Date(im.added*1000).getFullYear() }); }
+        catch(e){ r = null; bad++; }
+        if (r) {
+          const id = String(r.ref || '').replace(/[^A-Za-z0-9]/g, '');
+          if (!id || !r.amount || !r.date) bad++;
+          else if (store.docs['expenses/'+id] && !store.docs['expenses/'+id].deleted) dup++;
+          else {
+            const e = { v:1, ref:r.ref, date:r.date, time:r.time, amount:Number(r.amount), fee:Number(r.fee||0), type:r.type, app:r.app, to:r.to,
+              from_acct:r.from_acct, to_acct:r.to_acct, src:'slip', scannedAt: nowIso() };
+            e.cat = expAutoCat(e, state.exprules.rules);
+            putDoc('expenses/'+id, e); added++;
+          }
+        }
+        if (im.added > slipCfg.since) { slipCfg.since = im.added; slipCfg.doneIds = [im.id]; }
+        else if (!slipCfg.doneIds.includes(im.id)) slipCfg.doneIds.push(im.id);
+        saveSlipCfg();
+      }
+      try { await N.clearSlipCache(); } catch(e){}
+      if (!res.more) break;
+    }
+    slipCfg.lastScanAt = nowIso(); saveSlipCfg();
+    closeSheet();
+    toast(added ? 'พบสลิปใหม่ '+added+' รายการ'+(bad ? ' · อ่านไม่ได้ '+bad+' รูป' : '') : 'ไม่มีสลิปใหม่'+(bad ? ' · อ่านไม่ได้ '+bad+' รูป' : ''));
+  } catch(e){
+    closeSheet();
+    toast(e && e.message === 'no_permission' ? 'ต้องอนุญาตให้เข้าถึงรูปภาพก่อน' : 'สแกนไม่สำเร็จ ลองใหม่อีกครั้ง');
+  } finally {
+    slipScanning = false;
+    try { await N.clearSlipCache(); } catch(e){}
+    if (added) scheduleSync(800);
+    render();
+  }
+}
+// load slip/scan.js on first use only (keeps app start fast)
+function SlipScanLoader(){
+  if (window.SlipScan) return Promise.resolve();
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'slip/scan.js'; s.onload = res; s.onerror = () => rej(new Error('load scan.js')); document.head.appendChild(s); });
+}
+
 /* ---------- summary tab (Timeline) ---------- */
 let sumMonth = null;
 const mapsUrl = p => 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.ll)+(p.id ? '&query_place_id='+encodeURIComponent(p.id) : '');
@@ -1143,7 +1490,7 @@ function render(){
   const t = TODAY();
   $('#todayLabel').textContent = fmtLong(t);
   const v = $('#view');
-  v.innerHTML = tab==='home' ? viewHome() : tab==='leave' ? viewLeave() : tab==='car' ? viewCar() : viewSummary();
+  v.innerHTML = tab==='home' ? viewHome() : tab==='leave' ? viewLeave() : tab==='car' ? viewCar() : tab==='money' ? viewMoney() : viewSummary();
   bindView();
 }
 
@@ -1173,6 +1520,7 @@ function bindView(){
   if (ob1) ob1.addEventListener('click', openSettings);
   if (ob2) ob2.addEventListener('click', pickImportFile);
   if (tab === 'summary') bindSummary();
+  if (tab === 'money') bindMoney();
   const c = $('#copySummary');
   if (c) c.addEventListener('click', () => copyText(leaveSummaryText(state, Number(TODAY().slice(0,4)))));
 }
@@ -1599,7 +1947,7 @@ function bindNotifSection(){
 function showBanner(msg){ const b = $('#statusBanner'); b.textContent = msg; b.hidden = !msg; }
 async function boot(){
   const h = (location.hash||'').slice(1);
-  if (['home','leave','car','summary'].includes(h)) tab = h;
+  if (['home','leave','car','money','summary'].includes(h)) tab = h;
   if (!storageOk) showBanner('เครื่องไม่ยอมให้แอปเก็บข้อมูล ข้อมูลที่บันทึกจะหายเมื่อปิดแอป');
   setTab(tab);
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
