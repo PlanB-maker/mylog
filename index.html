@@ -274,32 +274,48 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
 /* expenses */
 .exp-scan{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .exp-scan .tx{display:flex;flex-direction:column;min-width:0}
+.exp-scan .acts{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.exp-scan .btn{white-space:nowrap}
 .exp-scan .tx b{font-size:16px}
 .exp-scan .tx span{font-size:12px;color:var(--muted)}
-.exp-sum{padding:16px;display:flex;gap:16px;align-items:center}
-.exp-donut{flex:0 0 auto;position:relative;width:120px;height:120px}
+.exp-h{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 4px 2px}
+.exp-h h2{margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap}
+.exp-h .acts{display:flex;align-items:center;gap:2px}
+.exp-cmp{white-space:nowrap;flex:0 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--accent-text);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;min-height:36px}
+.exp-sum{padding:16px 14px;display:flex;gap:14px;align-items:center;border-radius:18px}
+.exp-donut{flex:0 0 auto;position:relative;width:128px;height:128px}
 .exp-donut .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .exp-donut .c small{font-size:11px;color:var(--muted)}
-.exp-donut .c b{font-family:var(--font-num);font-size:20px}
-.exp-legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;font-size:13px}
-.exp-legend div{display:flex;align-items:center;gap:8px}
-.exp-legend i{width:10px;height:10px;flex:0 0 auto}
-.exp-legend span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.exp-legend b{font-family:var(--font-num);font-weight:600}
-.exp-legend em{font-style:normal;color:var(--muted);font-size:12px;min-width:34px;text-align:right}
+.exp-donut .c b{font-family:var(--font-num);font-size:22px;font-weight:800}
+.exp-legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.exp-legend .lg{display:flex;align-items:center;gap:7px}
+.exp-legend .lg > i{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.exp-legend .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.exp-legend b{font-family:var(--font-num);font-weight:700;white-space:nowrap}
+.exp-legend em{font-style:normal;color:var(--muted);font-size:11px;background:var(--surface2);border-radius:999px;padding:3px 7px;min-width:38px;text-align:center}
+.exp-tile{width:26px;height:26px;border-radius:8px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:var(--c);background:color-mix(in srgb,var(--c) 18%,transparent)}
+.exp-pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent)}
 .exp-note{font-size:12px;color:var(--muted);padding:8px 4px 0;display:flex;flex-wrap:wrap;gap:4px 14px}
-.exp-row{width:100%;border:0;background:var(--surface);color:var(--fg);display:flex;align-items:center;gap:12px;padding:12px 14px;text-align:left;cursor:pointer;border-bottom:1px solid var(--line)}
-.exp-row .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.exp-row .tx b{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.exp-row .tx span{font-size:12px;color:var(--muted)}
-.exp-row .amt{font-family:var(--font-num);font-weight:700;white-space:nowrap}
+.exp-list{display:flex;flex-direction:column;gap:8px}
+.exp-row{width:100%;border:0;background:var(--surface);color:var(--fg);display:flex;align-items:center;gap:12px;padding:12px 12px;text-align:left;cursor:pointer;border-radius:16px}
+.exp-badge{width:42px;height:42px;border-radius:50%;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;font-family:var(--font-num)}
+.exp-row .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.exp-row .tx b{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-row .tx span{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-row .rt{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
+.exp-row .amt{font-family:var(--font-num);font-weight:800;white-space:nowrap;color:var(--accent-text);font-size:15px}
 .exp-row .amt.dim{color:var(--muted);font-weight:500}
-.exp-chip{display:inline-flex;align-items:center;gap:5px}
-.exp-chip i{width:8px;height:8px;display:inline-block}
+.exp-more{display:block;margin:6px auto 0}
+.cmp-row{display:grid;grid-template-columns:26px minmax(0,1fr) 72px 72px 96px;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.cmp-row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmp-row .v{text-align:right;font-family:var(--font-num)}
+.cmp-row .d{text-align:right;font-size:12px;font-family:var(--font-num)}
+.cmp-row .up{color:var(--accent-text)} .cmp-row .down{color:var(--vac)}
+.cmp-hd{color:var(--muted);font-size:12px;border-bottom:0;padding-bottom:0}
+.cmp-tot{font-weight:700;border-bottom:0}
 .exp-cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .exp-cats input{position:absolute;opacity:0;pointer-events:none}
 .exp-cats label{background:var(--surface2);border:1px solid var(--line);min-height:44px;display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:14px;cursor:pointer}
-.exp-cats label i{width:10px;height:10px;flex:0 0 auto}
 .exp-cats input:checked + label{border-color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--accent-text);font-weight:700}
 .exp-cats input:focus-visible + label{outline:2px solid var(--accent-text);outline-offset:2px}
 .exp-kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:0 0 16px}
@@ -701,7 +717,7 @@ const EXP_CATS = {
   bills:  { label:'บิล/เน็ต/โทรศัพท์', color:'#34D399' },
   people: { label:'โอนให้คน',          color:'#A78BFA' },
   other:  { label:'อื่นๆ',              color:'#9A9AA0' },
-  self:   { label:'โอนเข้าบัญชีตัวเอง', color:'#6B6B72' },
+  self:   { label:'โอนเข้าบัญชีตัวเอง', color:'#22D3EE' },
   ignore: { label:'ไม่นับ',             color:'#6B6B72' }
 };
 const EXP_UNCAT = { label:'ยังไม่จัดหมวด', color:'#6B6B72' };
@@ -1097,67 +1113,118 @@ let slipCfg = Object.assign({ buckets:[], since:null, doneIds:[], lastScanAt:nul
 const saveSlipCfg = () => saveJSON(SLIPSCAN_KEY, slipCfg);
 let slipScanning = false;
 const fmtBaht = n => '฿'+Number(n||0).toLocaleString('th-TH', { minimumFractionDigits: Number(n)%1 ? 2 : 0, maximumFractionDigits: 2 });
+const fmtBahtShort = n => n >= 10000 ? '฿'+Math.round(n/1000)+'k' : fmtBaht(Math.round(n));
 const expCatInfo = c => c === 'topup' ? { label:'เติมเงิน', color:'#F01E14' } : (EXP_CATS[c] || EXP_UNCAT);
 const XBTN = '<button type="button" class="icon-btn" data-close aria-label="ปิด"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>';
+// small line icons per category (drawn here, no external images)
+const EXP_ICON_PATH = {
+  food:'<path d="M4 11h16a8 8 0 0 1-16 0z"></path><path d="M9 4c0 2 2 2 2 4M14 4c0 2 2 2 2 4"></path>',
+  shop:'<path d="M3 4h2l2.4 11h10.2L20 7H6.2"></path><circle cx="9" cy="19.5" r="1.3"></circle><circle cx="17" cy="19.5" r="1.3"></circle>',
+  travel:'<path d="M5 20V5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v15M4 20h11M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"></path>',
+  bills:'<path d="M6 3h9l3 3v15H6z"></path><path d="M9 10h6M9 14h6M9 18h3"></path>',
+  people:'<circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path>',
+  other:'<circle cx="6" cy="12" r="1.3"></circle><circle cx="12" cy="12" r="1.3"></circle><circle cx="18" cy="12" r="1.3"></circle>',
+  self:'<path d="M4 9h14l-4-4M20 15H6l4 4"></path>',
+  ignore:'<circle cx="12" cy="12" r="8"></circle><path d="M6.5 17.5l11-11"></path>',
+  topup:'<rect x="3" y="6" width="18" height="13" rx="2"></rect><path d="M16 12.5h2M3 10h18"></path>',
+  uncat:'<circle cx="12" cy="12" r="8"></circle><path d="M9.8 9.5a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.9-1.1 1.7M12 16.5v.01"></path>'
+};
+const expIcon = (c, size) => '<svg width="'+(size||18)+'" height="'+(size||18)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(EXP_ICON_PATH[c] || EXP_ICON_PATH.uncat)+'</svg>';
+const expTile = c => { const ci = expCatInfo(c); return '<span class="exp-tile" style="--c:'+ci.color+'">'+expIcon(c, 16)+'</span>'; };
+const expPill = (c, label) => { const ci = expCatInfo(c); return '<span class="exp-pill" style="--c:'+ci.color+'">'+expIcon(c, 13)+esc(label || ci.label)+'</span>'; };
+const EXP_APP = { kplus:{ badge:'K+', name:'K PLUS', color:'#12A150' }, make:{ badge:'MK', name:'MAKE', color:'#0EA5C6' } };
+let moneyShowAll = false;
 
 function expDonut(cats, total){
   const R = 48, C = 2*Math.PI*R; let off = 0;
+  const gap = cats.length > 1 ? 2 : 0;
   const arcs = total > 0 ? cats.map(([c, v]) => {
-    const len = C * v / total, a = '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+expCatInfo(c).color+'" stroke-width="16" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 60 60)"></circle>';
+    const len = C * v / total, vis = Math.max(0.5, len - gap);
+    const a = '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+expCatInfo(c).color+'" stroke-width="15" stroke-dasharray="'+vis.toFixed(2)+' '+(C-vis).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 60 60)"></circle>';
     off += len; return a; }).join('') : '';
-  return '<div class="exp-donut"><svg width="120" height="120" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--track)" stroke-width="16"></circle>'+arcs+'</svg>'+
-    '<div class="c"><small>รวมทั้งเดือน</small><b>'+fmtBaht(Math.round(total))+'</b></div></div>';
+  return '<div class="exp-donut"><svg width="128" height="128" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--track)" stroke-width="15"></circle>'+arcs+'</svg>'+
+    '<div class="c"><small>รวมทั้งหมด</small><b>'+fmtBahtShort(total)+'</b></div></div>';
 }
 function expMonths(){
   const cur = monthKey(TODAY()), ks = new Set([cur]);
   state.expenses.forEach(e => ks.add(monthKey(e.date)));
   const sorted = [...ks].sort(); return monthsFrom(sorted[0], cur);
 }
+function expRowHtml(e, S){
+  const kd = expKind(e, S.own, S.ownNames);
+  const c = kd === 'self' ? 'self' : kd === 'topup' ? 'topup' : (e.cat || 'uncat');
+  const dim = kd === 'self' || kd === 'ignore' || (kd === 'topup' && !state.exprules.includeTopup);
+  const app = EXP_APP[e.app] || EXP_APP.kplus;
+  const d = parse(e.date);
+  const when = d.getDate()+' '+TH_M[d.getMonth()]+' '+beYear(d.getFullYear())+(e.time ? ' • '+esc(e.time)+' น.' : '');
+  return '<button type="button" class="exp-row" data-exp="'+esc(e.id)+'">'+
+    '<span class="exp-badge" style="background:'+app.color+'">'+app.badge+'</span>'+
+    '<span class="tx"><b>'+esc(e.to || ((e.type || 'โอนเงิน')+'ผ่าน '+app.name))+'</b><span>'+when+' · '+esc((e.type || 'โอนเงิน')+'ผ่าน '+app.name)+'</span></span>'+
+    '<span class="rt">'+expPill(c)+'<span class="amt'+(dim?' dim':'')+'">-'+fmtBaht((Number(e.amount)||0)+(Number(e.fee)||0))+'</span></span></button>';
+}
 function viewMoney(){
+  const GEAR = '<button type="button" class="icon-btn" id="expSettings" aria-label="ตั้งค่ารายจ่าย"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>';
   const keys = expMonths();
   if (!moneyMonth || !keys.includes(moneyMonth)) moneyMonth = keys[keys.length-1];
   const k = moneyMonth, i = keys.indexOf(k);
   const S = expMonthSummary(state.expenses, k, !!state.exprules.includeTopup);
   const scan = nat()
-    ? '<div class="card cut-2 exp-scan"><div class="tx"><b>สแกนสลิป</b><span>'+(slipCfg.lastScanAt ? 'สแกนล่าสุด '+fmtTime(slipCfg.lastScanAt) : 'ยังไม่เคยสแกน')+'</span></div>'+
-      '<button type="button" class="btn btn-primary" id="expScan"'+(slipScanning?' disabled':'')+'>'+(slipScanning ? 'กำลังสแกน…' : 'สแกนสลิปใหม่')+'</button></div>'
-    : '<div class="card cut-2 exp-scan"><div class="tx"><b>สแกนสลิป</b><span>สแกนสลิปได้ในแอป Android · ที่นี่ดูและแก้หมวดได้</span></div></div>';
+    ? '<div class="card cut-2 exp-scan"><div class="tx"><b>สแกนสลิป</b><span>'+(slipCfg.lastScanAt ? 'สแกนล่าสุด '+fmtTime(slipCfg.lastScanAt) : 'ยังไม่เคยสแกน')+' · บันทึกแล้ว '+state.expenses.length+' รายการ</span></div>'+
+      '<span class="acts"><button type="button" class="btn btn-primary" id="expScan"'+(slipScanning?' disabled':'')+'>'+(slipScanning ? 'กำลังสแกน…' : 'สแกนสลิปใหม่')+'</button>'+GEAR+'</span></div>'
+    : '<div class="card cut-2 exp-scan"><div class="tx"><b>สแกนสลิป</b><span>สแกนสลิปได้ในแอป Android · ที่นี่ดูและแก้หมวดได้</span></div>'+GEAR+'</div>';
   const nav = '<div class="card cal-head tl-nav"><button type="button" class="icon-btn" id="expPrev" aria-label="เดือนก่อนหน้า"'+(i<=0?' disabled':'')+'>'+ICON.left+'</button>'+
     '<b>'+fmtMonth(k)+'</b><button type="button" class="icon-btn" id="expNext" aria-label="เดือนถัดไป"'+(i>=keys.length-1?' disabled':'')+'>'+ICON.right+'</button></div>';
-  const legend = S.cats.length ? S.cats.map(([c, v]) => { const ci = expCatInfo(c);
-      return '<div><i style="background:'+ci.color+'"></i><span>'+esc(ci.label)+'</span><b>'+fmtBaht(v)+'</b><em>'+(S.total ? Math.round(v*100/S.total) : 0)+'%</em></div>'; }).join('')
-    : '<div class="muted">ยังไม่มีรายจ่ายเดือนนี้</div>';
+  const legend = S.cats.length ? S.cats.map(([c, v]) => {
+      const pct = S.total ? v*100/S.total : 0;
+      return '<div class="lg"><i style="background:'+expCatInfo(c).color+'"></i>'+expTile(c)+'<span class="nm">'+esc(expCatInfo(c).label)+'</span><b>'+fmtBaht(v)+'</b><em>'+(pct > 0 && pct < 1 ? '<1' : Math.round(pct))+'%</em></div>'; }).join('')
+    : '<div class="muted" style="font-size:13px">ยังไม่มีรายจ่ายเดือนนี้</div>';
   const notes = [];
   if (S.uncat) notes.push('<span>รอจัดหมวด <b>'+S.uncat+'</b> รายการ แตะรายการเพื่อเลือกหมวด</span>');
   if (S.topup && !state.exprules.includeTopup) notes.push('<span>เติมเงิน '+fmtBaht(S.topup)+' (ไม่รวมในยอด)</span>');
   if (S.self) notes.push('<span>โอนเข้าบัญชีตัวเอง '+fmtBaht(S.self)+' (ไม่นับ)</span>');
-  const rows = S.items.length ? S.items.map(e => {
-      const kd = expKind(e, S.own, S.ownNames), ci = kd === 'self' ? { label:'บัญชีตัวเอง', color:'var(--faint)' } : kd === 'topup' ? expCatInfo('topup') : expCatInfo(e.cat || 'uncat');
-      const dim = kd === 'self' || kd === 'ignore' || (kd === 'topup' && !state.exprules.includeTopup);
-      return '<button type="button" class="exp-row" data-exp="'+esc(e.id)+'"><div class="tx"><b>'+esc(e.to || e.type || 'ไม่ทราบผู้รับ')+'</b>'+
-        '<span>'+fmtShort(e.date)+(e.time ? ' '+esc(e.time) : '')+' · <span class="exp-chip"><i style="background:'+ci.color+'"></i>'+esc(ci.label)+'</span></span></div>'+
-        '<span class="amt'+(dim?' dim':'')+'">-'+fmtBaht((Number(e.amount)||0)+(Number(e.fee)||0))+'</span></button>'; }).join('')
+  const LIMIT = 5, shown = moneyShowAll ? S.items : S.items.slice(0, LIMIT);
+  const rows = S.items.length ? shown.map(e => expRowHtml(e, S)).join('')
     : '<div class="all-done">ยังไม่มีรายการ'+(nat() ? ' กด "สแกนสลิปใหม่" เพื่อดึงสลิปจากแกลเลอรี' : '')+'</div>';
+  const more = S.items.length > LIMIT ? '<button type="button" class="link-btn exp-more" id="expAll">'+(moneyShowAll ? 'ย่อ' : 'ดูทั้งหมด '+S.items.length+' รายการ')+' '+(moneyShowAll ? '‹' : '›')+'</button>' : '';
+  const clock = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>';
+  const chart = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V4M4 20h16M9 16v-5M14 16V8M19 16v-3"></path></svg>';
   return scan + nav +
-    '<div class="sec-h"><h2>สรุปตามหมวด</h2><button type="button" class="link-btn" id="expSettings">ตั้งค่า</button></div>'+
+    '<div class="exp-h"><h2>'+chart+'สรุปค่าใช้จ่ายรายหมวดหมู่</h2><span class="acts"><button type="button" class="exp-cmp" id="expCmp">'+chart.replace('width="20" height="20"','width="16" height="16"')+'เปรียบเทียบ 2 เดือน</button></span></div>'+
     '<div class="card exp-sum">'+expDonut(S.cats, S.total)+'<div class="exp-legend">'+legend+'</div></div>'+
     (notes.length ? '<div class="exp-note">'+notes.join('')+'</div>' : '')+
-    '<div class="sec-h"><h2>รายการ</h2><span class="aside">'+S.items.length+' รายการ</span></div>'+
-    '<div>'+rows+'</div>';
+    '<div class="exp-h"><h2>'+clock+'รายการล่าสุด</h2>'+(S.items.length > LIMIT ? '<button type="button" class="link-btn" id="expAllTop">'+(moneyShowAll ? 'ย่อ' : 'ดูทั้งหมด')+' ›</button>' : '<span class="aside">'+S.items.length+' รายการ</span>')+'</div>'+
+    '<div class="exp-list">'+rows+'</div>'+more;
+}
+function openExpCompare(){
+  const keys = expMonths(), k = moneyMonth, prev = shiftMonth(k, -1);
+  const inc = !!state.exprules.includeTopup;
+  const A = expMonthSummary(state.expenses, prev, inc), B = expMonthSummary(state.expenses, k, inc);
+  const a = Object.fromEntries(A.cats), b = Object.fromEntries(B.cats);
+  const cats = [...new Set([...B.cats.map(x => x[0]), ...A.cats.map(x => x[0])])];
+  const diff = (x, y) => { const d = y - x; return d === 0 ? '<span class="muted">เท่าเดิม</span>' : '<span class="'+(d > 0 ? 'up' : 'down')+'">'+(d > 0 ? '▲ +' : '▼ −')+fmtBaht(Math.abs(d))+'</span>'; };
+  const row = (c, x, y) => '<div class="cmp-row">'+expTile(c)+'<span class="nm">'+esc(expCatInfo(c).label)+'</span><span class="v">'+fmtBaht(x||0)+'</span><span class="v"><b>'+fmtBaht(y||0)+'</b></span><span class="d">'+diff(x||0, y||0)+'</span></div>';
+  openSheet('<h3>เปรียบเทียบ 2 เดือน'+XBTN+'</h3>'+
+    '<div class="cmp-row cmp-hd"><span></span><span class="nm"></span><span class="v">'+TH_M[Number(prev.slice(5))-1]+'</span><span class="v">'+TH_M[Number(k.slice(5))-1]+'</span><span class="d">ต่าง</span></div>'+
+    (cats.length ? cats.map(c => row(c, a[c], b[c])).join('') : '<p class="muted">ยังไม่มีข้อมูลทั้งสองเดือน</p>')+
+    '<div class="cmp-row cmp-tot"><span></span><span class="nm">รวม</span><span class="v">'+fmtBaht(A.total)+'</span><span class="v"><b>'+fmtBaht(B.total)+'</b></span><span class="d">'+diff(A.total, B.total)+'</span></div>'+
+    '<p class="muted" style="font-size:12px;margin:12px 0 0">'+fmtMonth(prev)+' เทียบกับ '+fmtMonth(k)+(keys.includes(prev) ? '' : ' (เดือนก่อนยังไม่มีรายการ)')+'</p>');
 }
 function bindMoney(){
   const on = (sel, fn) => { const e = $(sel); if (e) e.addEventListener('click', fn); };
-  on('#expPrev', () => { const ks = expMonths(), i = ks.indexOf(moneyMonth); if (i > 0) { moneyMonth = ks[i-1]; render(); } });
-  on('#expNext', () => { const ks = expMonths(), i = ks.indexOf(moneyMonth); if (i < ks.length-1) { moneyMonth = ks[i+1]; render(); } });
+  on('#expPrev', () => { const ks = expMonths(), i = ks.indexOf(moneyMonth); if (i > 0) { moneyMonth = ks[i-1]; moneyShowAll = false; render(); } });
+  on('#expNext', () => { const ks = expMonths(), i = ks.indexOf(moneyMonth); if (i < ks.length-1) { moneyMonth = ks[i+1]; moneyShowAll = false; render(); } });
   on('#expScan', () => scanSlips());
   on('#expSettings', openExpSettings);
+  on('#expCmp', openExpCompare);
+  const toggle = () => { moneyShowAll = !moneyShowAll; render(); };
+  on('#expAll', toggle); on('#expAllTop', toggle);
   document.querySelectorAll('[data-exp]').forEach(b => b.addEventListener('click', () => openExpense(state.expenses.find(e => e.id === b.dataset.exp))));
 }
 
 function openExpense(e){
   if (!e) return;
   const own = expOwnAccounts(state.expenses), kd = expKind(e, own, expOwnNames(state.expenses));
-  const cats = Object.entries(EXP_CATS).map(([c, ci]) => '<input type="radio" name="expCat" id="ec_'+c+'" value="'+c+'"'+(e.cat===c?' checked':'')+'><label for="ec_'+c+'"><i style="background:'+ci.color+'"></i>'+esc(ci.label)+'</label>').join('');
+  const cats = Object.entries(EXP_CATS).map(([c, ci]) => '<input type="radio" name="expCat" id="ec_'+c+'" value="'+c+'"'+(e.cat===c?' checked':'')+'><label for="ec_'+c+'">'+expTile(c)+esc(ci.label)+'</label>').join('');
   const kindNote = kd === 'self' && e.cat !== 'self' ? '<p class="muted" style="font-size:13px;margin:0 0 12px">โอนเข้าบัญชีของคุณเอง'+(e.to_acct && own.has(e.to_acct) ? ' (ท้าย '+esc(e.to_acct)+')' : ' (ชื่อผู้รับตรงกับชื่อคุณ)')+' จึงไม่นับเป็นรายจ่าย เลือกหมวดอื่นได้ถ้าไม่ใช่</p>'
     : kd === 'topup' ? '<p class="muted" style="font-size:13px;margin:0 0 12px">เติมเงินเข้ากระเป๋าเงิน แยกจากรายจ่าย'+(state.exprules.includeTopup ? ' (ตั้งค่าให้นับรวมในยอดอยู่)' : ' (ไม่รวมในยอด เปลี่ยนได้ที่ ตั้งค่า)')+'</p>' : '';
   openSheet('<h3>รายการ'+XBTN+'</h3>'+
