@@ -118,6 +118,17 @@
     L.forEach((l, i) => { const m = l.match(ACCT); if (m) accts.push([i, m[1]]); });
     r.from_acct = accts[0] ? accts[0][1] : null;
     r.to_acct = accts[1] ? accts[1][1] : null;
+    // sender name: closest real text line above the sender's masked account, in the same column
+    // (K PLUS: name / bank / account, MAKE: name / account)
+    r.from_name = null;
+    if (accts.length) {
+      const ai = accts[0][0], col = xs[ai], tol = 0.05 * width;
+      for (let j = ai - 1; j >= Math.max(0, ai - 3); j--) {
+        const l = L[j];
+        if (Math.abs(xs[j] - col) > tol || /^ธ\.|ธนาคาร|kbank/i.test(l) || /\d{1,2}:\d{2}/.test(l)) continue;
+        if (l.replace(/[^A-Za-zก-์]/g, '').length >= 3) { r.from_name = l; break; }
+      }
+    }
     r.to = null;
     if (accts.length) {
       const start = accts[0][0] + 1, col = xs[accts[0][0]], tol = 0.05 * width;

@@ -101,15 +101,23 @@ function rebuildViews_(rows) {
   writeView_('Timesheet', ['เดือน', 'หัวหน้าเซ็นแล้ว', 'ส่ง HR แล้ว'], ts);
   const exps = live.filter(r => String(r[0]).indexOf('expenses/') === 0).map(r => JSON.parse(r[1]))
     .filter(x => x.date).sort((a, b) => (a.date + (a.time || '')) < (b.date + (b.time || '')) ? -1 : 1);
-  const own = {};
-  exps.forEach(x => { if (x.from_acct) own[x.from_acct] = true; });
+  const own = {}, names = [];
+  exps.forEach(x => { if (x.from_acct) own[x.from_acct] = true; const p = nameParts_(x.from_name); if (p && p[0].length >= 2) names.push(p); });
+  const isOwnName = to => { const p = nameParts_(to); return !!(p && p[1] && names.some(n => n[0] === p[0] && n[1] && (p[1].indexOf(n[1]) === 0 || n[1].indexOf(p[1]) === 0))); };
   writeView_('รายจ่าย', ['วันที่', 'เวลา', 'ผู้รับ', 'หมวด', 'ประเภทสลิป', 'จำนวน', 'ค่าธรรมเนียม', 'เลขที่รายการ', 'แอป'],
     exps.map(x => [x.date, x.time || '', x.to || '',
-      x.type === 'เติมเงิน' ? 'เติมเงิน' : (x.to_acct && own[x.to_acct]) ? 'โอนเข้าบัญชีตัวเอง' : (EXP_CAT_TH_[x.cat] || 'ยังไม่จัดหมวด'),
+      x.cat === 'self' ? 'โอนเข้าบัญชีตัวเอง' : x.type === 'เติมเงิน' ? 'เติมเงิน'
+        : ((x.to_acct && own[x.to_acct]) || (x.type === 'โอนเงิน' && isOwnName(x.to))) ? 'โอนเข้าบัญชีตัวเอง' : (EXP_CAT_TH_[x.cat] || 'ยังไม่จัดหมวด'),
       x.type || '', Number(x.amount || 0).toFixed(2), Number(x.fee || 0).toFixed(2), x.ref || '', x.app === 'make' ? 'MAKE' : 'K PLUS']));
 }
 
-const EXP_CAT_TH_ = { food: 'อาหาร/เครื่องดื่ม', shop: 'ช้อปปิ้ง', travel: 'เดินทาง/น้ำมัน', bills: 'บิล/เน็ต/โทรศัพท์', people: 'โอนให้คน', other: 'อื่นๆ', ignore: 'ไม่นับ' };
+const EXP_CAT_TH_ = { food: 'อาหาร/เครื่องดื่ม', shop: 'ช้อปปิ้ง', travel: 'เดินทาง/น้ำมัน', bills: 'บิล/เน็ต/โทรศัพท์', people: 'โอนให้คน', other: 'อื่นๆ', self: 'โอนเข้าบัญชีตัวเอง', ignore: 'ไม่นับ' };
+
+function nameParts_(n) {
+  const key = s => String(s || '').toLowerCase().replace(/[\s.,()\-]/g, '').replace(/[\u0e31\u0e34-\u0e3a\u0e47-\u0e4e]/g, '');
+  const t = String(n || '').trim().replace(/^(นางสาว|น\.ส\.|นาง|นาย|ด\.ช\.|ด\.ญ\.|mrs?\.?|ms\.?|miss)\s*/i, '').split(/\s+/).filter(Boolean);
+  return t.length ? [key(t[0]), key(t.slice(1).join(''))] : null;
+}
 
 function yes_(v) { return v ? 'ใช่' : '-'; }
 

@@ -701,6 +701,7 @@ const EXP_CATS = {
   bills:  { label:'บิล/เน็ต/โทรศัพท์', color:'#34D399' },
   people: { label:'โอนให้คน',          color:'#A78BFA' },
   other:  { label:'อื่นๆ',              color:'#9A9AA0' },
+  self:   { label:'โอนเข้าบัญชีตัวเอง', color:'#6B6B72' },
   ignore: { label:'ไม่นับ',             color:'#6B6B72' }
 };
 const EXP_UNCAT = { label:'ยังไม่จัดหมวด', color:'#6B6B72' };
@@ -740,19 +741,36 @@ function expAutoCat(e, rules){
 }
 // accounts the user sends from = own accounts (seen as sender on any slip)
 function expOwnAccounts(list){ return new Set((list||[]).map(e => e.from_acct).filter(Boolean)); }
-function expKind(e, own){
+// a person's name split into first name + surname, title removed: "นาย ณภัทร ส" -> ['ณภทร','ส']
+function expNameParts(n){
+  const t = String(n||'').trim().replace(/^(นางสาว|น\.ส\.|นาง|นาย|ด\.ช\.|ด\.ญ\.|mrs?\.?|ms\.?|miss)\s*/i, '').split(/\s+/).filter(Boolean);
+  return t.length ? [expKey(t[0]), expKey(t.slice(1).join(''))] : null;
+}
+// own names = sender names on the slips (bank shows first name + surname initial)
+function expOwnNames(list){
+  const out = [], seen = new Set();
+  (list||[]).forEach(e => { const p = expNameParts(e.from_name); if (p && p[0].length >= 2 && !seen.has(p.join('|'))) { seen.add(p.join('|')); out.push(p); } });
+  return out;
+}
+function expIsOwnName(to, names){
+  const p = expNameParts(to); if (!p || !p[1]) return false;
+  return names.some(([f, s]) => f === p[0] && s && (p[1].startsWith(s) || s.startsWith(p[1])));
+}
+function expKind(e, own, ownNames){
+  if (e.cat === 'self') return 'self';
   if (e.type === 'เติมเงิน') return 'topup';
   if (e.to_acct && own.has(e.to_acct)) return 'self';
+  if (e.type === 'โอนเงิน' && ownNames && expIsOwnName(e.to, ownNames)) return 'self';
   if (e.cat === 'ignore') return 'ignore';
   return 'spend';
 }
 function expMonthSummary(list, key, includeTopup){
-  const own = expOwnAccounts(list);
+  const own = expOwnAccounts(list), ownNames = expOwnNames(list);
   const items = (list||[]).filter(e => e.date && monthKey(e.date) === key)
     .sort((a,b) => (b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
   const byCat = {}; let total = 0, topup = 0, self = 0, uncat = 0;
   items.forEach(e => {
-    const k = expKind(e, own), amt = (Number(e.amount)||0) + (Number(e.fee)||0);
+    const k = expKind(e, own, ownNames), amt = (Number(e.amount)||0) + (Number(e.fee)||0);
     if (k === 'self') { self += amt; return; }
     if (k === 'ignore') return;
     if (k === 'topup') { topup += amt; if (!includeTopup) return; }
@@ -761,7 +779,7 @@ function expMonthSummary(list, key, includeTopup){
     byCat[c] = (byCat[c]||0) + amt; total += amt;
   });
   const cats = Object.entries(byCat).sort((a,b) => b[1]-a[1]);
-  return { items, own, total, topup, self, uncat, cats };
+  return { items, own, ownNames, total, topup, self, uncat, cats };
 }
 /*LOGIC END*/
 
@@ -1114,7 +1132,7 @@ function viewMoney(){
   if (S.topup && !state.exprules.includeTopup) notes.push('<span>เติมเงิน '+fmtBaht(S.topup)+' (ไม่รวมในยอด)</span>');
   if (S.self) notes.push('<span>โอนเข้าบัญชีตัวเอง '+fmtBaht(S.self)+' (ไม่นับ)</span>');
   const rows = S.items.length ? S.items.map(e => {
-      const kd = expKind(e, S.own), ci = kd === 'self' ? { label:'บัญชีตัวเอง', color:'var(--faint)' } : kd === 'topup' ? expCatInfo('topup') : expCatInfo(e.cat || 'uncat');
+      const kd = expKind(e, S.own, S.ownNames), ci = kd === 'self' ? { label:'บัญชีตัวเอง', color:'var(--faint)' } : kd === 'topup' ? expCatInfo('topup') : expCatInfo(e.cat || 'uncat');
       const dim = kd === 'self' || kd === 'ignore' || (kd === 'topup' && !state.exprules.includeTopup);
       return '<button type="button" class="exp-row" data-exp="'+esc(e.id)+'"><div class="tx"><b>'+esc(e.to || e.type || 'ไม่ทราบผู้รับ')+'</b>'+
         '<span>'+fmtShort(e.date)+(e.time ? ' '+esc(e.time) : '')+' · <span class="exp-chip"><i style="background:'+ci.color+'"></i>'+esc(ci.label)+'</span></span></div>'+
@@ -1138,9 +1156,9 @@ function bindMoney(){
 
 function openExpense(e){
   if (!e) return;
-  const own = expOwnAccounts(state.expenses), kd = expKind(e, own);
+  const own = expOwnAccounts(state.expenses), kd = expKind(e, own, expOwnNames(state.expenses));
   const cats = Object.entries(EXP_CATS).map(([c, ci]) => '<input type="radio" name="expCat" id="ec_'+c+'" value="'+c+'"'+(e.cat===c?' checked':'')+'><label for="ec_'+c+'"><i style="background:'+ci.color+'"></i>'+esc(ci.label)+'</label>').join('');
-  const kindNote = kd === 'self' ? '<p class="muted" style="font-size:13px;margin:0 0 12px">โอนเข้าบัญชีของคุณเอง (ท้าย '+esc(e.to_acct)+') จึงไม่นับเป็นรายจ่าย</p>'
+  const kindNote = kd === 'self' && e.cat !== 'self' ? '<p class="muted" style="font-size:13px;margin:0 0 12px">โอนเข้าบัญชีของคุณเอง'+(e.to_acct && own.has(e.to_acct) ? ' (ท้าย '+esc(e.to_acct)+')' : ' (ชื่อผู้รับตรงกับชื่อคุณ)')+' จึงไม่นับเป็นรายจ่าย เลือกหมวดอื่นได้ถ้าไม่ใช่</p>'
     : kd === 'topup' ? '<p class="muted" style="font-size:13px;margin:0 0 12px">เติมเงินเข้ากระเป๋าเงิน แยกจากรายจ่าย'+(state.exprules.includeTopup ? ' (ตั้งค่าให้นับรวมในยอดอยู่)' : ' (ไม่รวมในยอด เปลี่ยนได้ที่ ตั้งค่า)')+'</p>' : '';
   openSheet('<h3>รายการ'+XBTN+'</h3>'+
     '<dl class="exp-kv"><dt>ผู้รับ</dt><dd>'+esc(e.to || '-')+'</dd><dt>จำนวน</dt><dd class="num"><b>'+fmtBaht(e.amount)+'</b>'+(Number(e.fee) ? ' + ค่าธรรมเนียม '+fmtBaht(e.fee) : '')+'</dd>'+
@@ -1271,10 +1289,14 @@ async function scanSlips(){
         if (r) {
           const id = String(r.ref || '').replace(/[^A-Za-z0-9]/g, '');
           if (!id || !r.amount || !r.date) bad++;
-          else if (store.docs['expenses/'+id] && !store.docs['expenses/'+id].deleted) dup++;
+          else if (store.docs['expenses/'+id] && !store.docs['expenses/'+id].deleted) {
+            dup++;
+            const old = store.docs['expenses/'+id].data;   // older scans had no sender name: fill it in, keep the rest
+            if (old && !old.from_name && r.from_name) putDoc('expenses/'+id, Object.assign({}, old, { from_name: r.from_name }));
+          }
           else {
             const e = { v:1, ref:r.ref, date:r.date, time:r.time, amount:Number(r.amount), fee:Number(r.fee||0), type:r.type, app:r.app, to:r.to,
-              from_acct:r.from_acct, to_acct:r.to_acct, src:'slip', scannedAt: nowIso() };
+              from_acct:r.from_acct, to_acct:r.to_acct, from_name:r.from_name, src:'slip', scannedAt: nowIso() };
             e.cat = expAutoCat(e, state.exprules.rules);
             putDoc('expenses/'+id, e); added++;
           }
