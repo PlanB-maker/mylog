@@ -1361,7 +1361,7 @@ function openExpSettings(){
     '<label class="check"><input type="checkbox" id="expTopup"'+(state.exprules.includeTopup?' checked':'')+'><span>นับเติมเงิน (เช่น TrueMoney) รวมในยอดรายจ่าย<br><small>ปิดไว้: แสดงยอดเติมเงินแยก ไม่รวมในยอด</small></span></label>'+
     (nat() ? '<div class="set-sec"><h4>อัลบั้มสลิป</h4><p class="muted" style="font-size:13px;margin:0 0 10px">'+albums+'</p>'+
       '<div class="tool-row"><button type="button" class="btn btn-ghost" id="expAlbums">เลือกอัลบั้ม</button><button type="button" class="btn btn-ghost" id="expRescan">สแกนย้อนหลังใหม่</button></div>'+
-      '<p class="muted" style="font-size:12px;margin:8px 0 0">แอปอ่านรูปในอัลบั้มที่เลือกอย่างเดียว ไม่แก้ ไม่ลบรูปในแกลเลอรี และประมวลผลในเครื่อง ไม่ส่งรูปออกไปไหน</p></div>' : '')+
+      '<p class="muted" style="font-size:12px;margin:8px 0 0">สแกนอัตโนมัติทุกครั้งที่เปิดแอปหรือกลับมาที่แอป (เว้นอย่างน้อย 5 นาที) · แอปอ่านรูปในอัลบั้มที่เลือกอย่างเดียว ไม่แก้ ไม่ลบรูปในแกลเลอรี และประมวลผลในเครื่อง ไม่ส่งรูปออกไปไหน</p></div>' : '')+
     '<div class="set-sec"><h4>ชื่อที่จำไว้ ('+rules.length+')</h4>'+
       (rules.length ? rules.map((r, i) => '<div class="exp-rule"><span>'+esc(r.name || r.m)+' → '+esc(expCatInfo(r.cat).label)+'</span><button type="button" class="link-btn" data-rdel="'+i+'">ลบ</button></div>').join('')
         : '<p class="muted" style="font-size:13px;margin:0">ยังไม่มี เวลาเลือกหมวดให้รายการ แอปจะจำชื่อไว้ให้</p>')+'</div>');
@@ -1418,16 +1418,43 @@ function scanProgress(text, frac){
   const t = document.getElementById('scanText'), b = document.getElementById('scanBar');
   if (t) t.textContent = text; if (b) b.style.width = Math.round(Math.max(0, Math.min(1, frac))*100)+'%';
 }
-async function scanSlips(){
+// auto scan when the app is opened or brought back: quiet, at most every 5 minutes,
+// only after the user has set it up once (photo access granted + albums chosen)
+const AUTO_SCAN_GAP_MS = 5 * 60 * 1000;
+let lastAutoScan = 0;
+async function autoScanSlips(){
+  const N = nat();
+  if (!N || slipScanning || !slipCfg.buckets.length || slipCfg.since == null) return;
+  if (Date.now() - lastAutoScan < AUTO_SCAN_GAP_MS) return;
+  lastAutoScan = Date.now();
+  let a = { granted:false };
+  try { a = await N.slipAccess(); } catch(e){}
+  if (!a.granted) return;                       // never pops a permission dialog by itself
+  return scanSlips({ silent:true });
+}
+// update the scan button in place (no full re-render while the user may be typing or in a sheet)
+function paintScanState(){
+  const b = document.getElementById('expScan');
+  if (b) { b.disabled = slipScanning; const t = b.lastChild; if (t && t.nodeType === 3) t.textContent = slipScanning ? 'กำลังสแกน…' : 'สแกนสลิป'; }
+}
+function canRerender(){
+  const a = document.activeElement;
+  return !$('#sheetRoot').innerHTML && !(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && $('#view').contains(a));
+}
+async function scanSlips(opts){
+  const silent = !!(opts && opts.silent);
   const N = nat(); if (!N || slipScanning) return;
-  if (!(await ensureSlipAccess())) return;
-  if (!slipCfg.buckets.length && !(await pickSlipAlbums(true))) return;
+  if (!silent) {
+    if (!(await ensureSlipAccess())) return;
+    if (!slipCfg.buckets.length && !(await pickSlipAlbums(true))) return;
+  }
   if (slipCfg.since == null) { slipCfg.since = Math.floor(parse(monthKey(TODAY())+'-01').getTime()/1000) - 1; slipCfg.doneIds = []; saveSlipCfg(); }
-  slipScanning = true; render();
+  slipScanning = true; paintScanState();
+  if (!silent) lastAutoScan = Date.now();
   let cancelled = false, seen = 0, added = 0, dup = 0, bad = 0;
-  openSheet('<h3>กำลังสแกนสลิป</h3><p class="muted" id="scanText" style="font-size:14px;margin:0">กำลังเตรียมตัวอ่านสลิป…</p><div class="exp-prog"><i id="scanBar"></i></div>'+
+  if (!silent) openSheet('<h3>กำลังสแกนสลิป</h3><p class="muted" id="scanText" style="font-size:14px;margin:0">กำลังเตรียมตัวอ่านสลิป…</p><div class="exp-prog"><i id="scanBar"></i></div>'+
     '<p class="muted" style="font-size:12px;margin:0 0 8px">ประมวลผลในเครื่อง ไม่ส่งรูปออกไปไหน</p><div class="sheet-actions"><span></span><button type="button" class="btn btn-ghost" id="scanStop">หยุด</button></div>');
-  $('#scanStop').addEventListener('click', () => { cancelled = true; scanProgress('กำลังหยุด…', 1); });
+  if (!silent) $('#scanStop').addEventListener('click', () => { cancelled = true; scanProgress('กำลังหยุด…', 1); });
   try {
     await SlipScanLoader();
     await window.SlipScan.init('slip/');
@@ -1468,16 +1495,22 @@ async function scanSlips(){
       if (!res.more) break;
     }
     slipCfg.lastScanAt = nowIso(); saveSlipCfg();
-    closeSheet();
-    toast(added ? 'พบสลิปใหม่ '+added+' รายการ'+(bad ? ' · อ่านไม่ได้ '+bad+' รูป' : '') : 'ไม่มีสลิปใหม่'+(bad ? ' · อ่านไม่ได้ '+bad+' รูป' : ''));
+    if (silent) { if (added) toast('สแกนอัตโนมัติ: พบสลิปใหม่ '+added+' รายการ'); }
+    else {
+      closeSheet();
+      toast(added ? 'พบสลิปใหม่ '+added+' รายการ'+(bad ? ' · อ่านไม่ได้ '+bad+' รูป' : '') : 'ไม่มีสลิปใหม่'+(bad ? ' · อ่านไม่ได้ '+bad+' รูป' : ''));
+    }
   } catch(e){
-    closeSheet();
-    toast(e && e.message === 'no_permission' ? 'ต้องอนุญาตให้เข้าถึงรูปภาพก่อน' : 'สแกนไม่สำเร็จ ลองใหม่อีกครั้ง');
+    if (!silent) {
+      closeSheet();
+      toast(e && e.message === 'no_permission' ? 'ต้องอนุญาตให้เข้าถึงรูปภาพก่อน' : 'สแกนไม่สำเร็จ ลองใหม่อีกครั้ง');
+    }
   } finally {
     slipScanning = false;
     try { await N.clearSlipCache(); } catch(e){}
     if (added) scheduleSync(800);
-    render();
+    if (!silent || canRerender()) render();
+    else { recompute(); updatePendingBar(); paintScanState(); if (added) viewStale = true; }   // redraw once the sheet closes
   }
 }
 // load slip/scan.js on first use only (keeps app start fast)
@@ -1735,7 +1768,8 @@ function openSheet(html){
   ov.addEventListener('keydown', e => { if (e.key==='Escape') closeSheet(); });
   const f = ov.querySelector('input,select,textarea,button'); if (f) f.focus();
 }
-function closeSheet(){ $('#sheetRoot').innerHTML = ''; if (lastFocus && lastFocus.focus) try{ lastFocus.focus(); }catch(e){} }
+let viewStale = false;   // set when data changed in the background while a sheet was open
+function closeSheet(){ $('#sheetRoot').innerHTML = ''; if (viewStale) { viewStale = false; render(); } if (lastFocus && lastFocus.focus) try{ lastFocus.focus(); }catch(e){} }
 
 function openLeave(l, presetDate){
   const isNew = !l;
@@ -2020,7 +2054,7 @@ $('#settingsBtn').addEventListener('click', openSettings);
 $('#flushBtn').addEventListener('click', () => { if (syncConfigured()) sync(true); else openSettings(); });
 window.addEventListener('online', () => sync());
 window.addEventListener('offline', () => { syncState = 'offline'; updateSyncBar(); });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { sync(); onAppReturnTl(); if (isNative) refreshNotifStatus().then(() => scheduleReminders(true)); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { sync(); onAppReturnTl(); if (isNative) { refreshNotifStatus().then(() => scheduleReminders(true)); setTimeout(autoScanSlips, 1200); } } });
 document.addEventListener('resume', () => onAppReturnTl());
 window.addEventListener('focus', () => onAppReturnTl());
 document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
@@ -2134,7 +2168,7 @@ async function boot(){
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
   if (!isNative && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => {});
   sync();
-  if (isNative) { notifInit(); checkUpdate(); initTlFlow(); }
+  if (isNative) { notifInit(); checkUpdate(); initTlFlow(); setTimeout(autoScanSlips, 2500); }
   setInterval(() => { if (document.visibilityState === 'visible') sync(); }, 120000);
 }
 boot();
